@@ -315,26 +315,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Sidebar
-with st.sidebar:
-    st.markdown("<h2 style='text-align: center; margin-bottom: 2rem;'>🛡️ Shield Settings</h2>", unsafe_allow_html=True)
-    
-    mode = st.radio(
-        "🧠 Detection Engine",
-        options=["⚡ Fast (TF-IDF + LR)", "🎯 Accurate (DistilBERT)"],
-        help="Fast mode is instantaneous. Accurate mode requires the trained BERT model."
-    )
-
-    st.markdown("<br><hr>", unsafe_allow_html=True)
-    st.subheader("📚 Quick Test Articles")
-    st.write("Click a button below to load an example article into the text area.")
-    example_fake = st.button("Load Fake News Example 🚨", use_container_width=True)
-    example_real = st.button("Load Real News Example ✅", use_container_width=True)
-    
-    st.markdown("<br><hr>", unsafe_allow_html=True)
-    st.caption("Developed for educational purposes. Always verify news with multiple sources.")
-
-# Example texts
+# ── Example Texts ──────────────────────────────────────────────────────────────
 FAKE_EXAMPLE = """BREAKING: Scientists CONFIRM that 5G towers are spreading COVID-19!!! 
 The mainstream media is HIDING the truth from you. George Soros is funding a secret 
 agenda to inject microchips into every person through the COVID vaccine. Share this 
@@ -349,15 +330,34 @@ Fed Chair Jerome Powell said in a news conference that the central bank remains
 committed to restoring price stability, noting that while inflation has eased 
 from its peak, it remains well above the committee's long-run goal."""
 
+if "article_text" not in st.session_state:
+    st.session_state["article_text"] = ""
+
+# Sidebar
+with st.sidebar:
+    st.markdown("<h2 style='text-align: center; margin-bottom: 2rem;'>🛡️ Shield Settings</h2>", unsafe_allow_html=True)
+    
+    mode = st.radio(
+        "🧠 Detection Engine",
+        options=["⚡ Fast (TF-IDF + LR)", "🎯 Accurate (DistilBERT)"],
+        help="Fast mode is instantaneous. Accurate mode requires the trained BERT model."
+    )
+
+    st.markdown("<br><hr>", unsafe_allow_html=True)
+    st.subheader("📚 Quick Test Articles")
+    st.write("Click a button below to load an example article into the text area.")
+    
+    if st.button("Load Fake News Example 🚨", use_container_width=True):
+        st.session_state["article_text"] = FAKE_EXAMPLE
+    if st.button("Load Real News Example ✅", use_container_width=True):
+        st.session_state["article_text"] = REAL_EXAMPLE
+    
+    st.markdown("<br><hr>", unsafe_allow_html=True)
+    st.caption("Developed for educational purposes. Always verify news with multiple sources.")
+
 # Main input area
 st.markdown("### 📰 Input Article")
 st.write("Paste the text of the article you want to verify below.")
-
-default_text = ""
-if example_fake:
-    default_text = FAKE_EXAMPLE
-elif example_real:
-    default_text = REAL_EXAMPLE
 
 col_input, col_stats = st.columns([3, 1])
 
@@ -365,7 +365,7 @@ with col_input:
     title_input = st.text_input("Headline (Optional):", placeholder="e.g., Politicians Caught in Scandal...")
     text_input  = st.text_area(
         "Article Content:",
-        value=default_text,
+        key="article_text",
         height=200,
         placeholder="Paste the full article text here...",
     )
