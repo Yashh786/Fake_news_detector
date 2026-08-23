@@ -1,0 +1,44 @@
+# ─── Core Data Science ───────────────────────────────────────────────────────
+pandas
+numpy
+
+# ─── ML ──────────────────────────────────────────────────────────────────────
+scikit-learn
+xgboost
+joblib
+
+# ─── NLP ─────────────────────────────────────────────────────────────────────
+nltk
+spacy
+gensim
+vaderSentiment
+
+# ─── Deep Learning (GPU: CUDA 12.x via PyTorch) ───────────────────────────────
+# Install PyTorch with CUDA 12.1 support (matches RTX 4060):
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+torch
+torchvision
+torchaudio
+
+# Hugging Face Transformers (BERT, DistilBERT etc.)
+transformers
+datasets
+accelerate
+
+# TensorFlow (optional, for Keras LSTM)
+tensorflow
+
+# ─── Visualization ────────────────────────────────────────────────────────────
+matplotlib
+seaborn
+plotly
+wordcloud
+
+# ─── Web App ─────────────────────────────────────────────────────────────────
+streamlit
+streamlit-extras
+
+# ─── Utilities ────────────────────────────────────────────────────────────────
+tqdm
+python-dotenv
+kaggle
