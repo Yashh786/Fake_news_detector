@@ -176,7 +176,7 @@ ax.set_title("ROC Curves — All Models", fontsize=13, fontweight="bold")
 ax.legend(loc="lower right", fontsize=9)
 plt.tight_layout()
 plt.savefig("../reports/figures/11_roc_curves.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %% [markdown]
 # ## 6. TF-IDF Feature Importance

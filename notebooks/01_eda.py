@@ -104,7 +104,7 @@ axes[1].set_title("Class Balance", fontsize=14, fontweight="bold")
 
 plt.tight_layout()
 plt.savefig("../reports/figures/01_class_distribution.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %% [markdown]
 # ## 5. Text Length Analysis
@@ -131,7 +131,7 @@ for ax, label, color, name in [
 
 plt.tight_layout()
 plt.savefig("../reports/figures/02_text_length.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 print(f"REAL news avg length: {df[df['label']==0]['text_length'].mean():.0f} words")
 print(f"FAKE news avg length: {df[df['label']==1]['text_length'].mean():.0f} words")
@@ -174,7 +174,7 @@ for ax, text, title, color in [
 
 plt.tight_layout()
 plt.savefig("../reports/figures/03_wordclouds.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %% [markdown]
 # ## 7. Top Discriminating Words
@@ -208,7 +208,7 @@ ax.axvline(1.0, color="black", linestyle="--", linewidth=1, label="Equal frequen
 ax.legend()
 plt.tight_layout()
 plt.savefig("../reports/figures/04_discriminating_words.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %% [markdown]
 # ## 8. Author Analysis

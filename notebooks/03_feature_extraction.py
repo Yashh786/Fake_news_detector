@@ -97,7 +97,7 @@ ax.set_title("Top 20 Terms by Mean TF-IDF Score (Training Set)", fontsize=13, fo
 ax.set_xlabel("Mean TF-IDF Score")
 plt.tight_layout()
 plt.savefig("../reports/figures/06_top_tfidf_terms.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %% [markdown]
 # ## 4. Bag-of-Words (Baseline Comparison)
@@ -155,7 +155,7 @@ for ax, feat in zip(axes, features_to_plot):
 plt.suptitle("Linguistic Feature Distributions: REAL vs FAKE", fontsize=14, fontweight="bold")
 plt.tight_layout()
 plt.savefig("../reports/figures/07_linguistic_features.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %% [markdown]
 # ## 6. VADER Sentiment Features
@@ -187,7 +187,7 @@ ax.set_title("Sentiment Distribution: REAL vs FAKE News", fontsize=13, fontweigh
 ax.legend()
 plt.tight_layout()
 plt.savefig("../reports/figures/08_sentiment_distribution.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %% [markdown]
 # ## 7. Combined Feature Matrix (TF-IDF + Linguistic + Sentiment)

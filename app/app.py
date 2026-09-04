@@ -35,188 +35,382 @@ import pandas as pd
 # ── Page Config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Shield | Fake News Detector",
-    page_icon="🛡️",
+    page_icon=":material/fact_check:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ── Styling ───────────────────────────────────────────────────────────────────
+# ── Styling — Altitude Design System ────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Fix for sidebar toggle button disappearing: Do NOT hide the whole header */
+    @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap');
+
+    /* ── Altitude Tokens ───────────────────────────────── */
+    :root {
+        --color-carbon-canvas:  #181818;
+        --color-obsidian:       #111111;
+        --color-graphite-card:  #1f1f1f;
+        --color-slate-elevated: #262626;
+        --color-iron-peak:      #323232;
+        --color-bone:           #eeeeee;
+        --color-ash:            #e4e4e4;
+        --color-fog:            #a4a19b;
+        --color-smoke:          #5e5d59;
+        --color-pewter:         #4b4b4b;
+        --color-voltage-blue:   #2b7fff;
+        --color-mid-navy:       #1a365d;
+        --font-serif:   'Libre Baskerville', 'Source Serif Pro', Georgia, serif;
+        --font-inter:   'Inter', system-ui, -apple-system, sans-serif;
+        --font-mono:    'Fira Code', 'JetBrains Mono', monospace;
+        --shadow-md:    rgba(51,51,51,0.05) 0px 2px 15px 0px, rgba(51,51,51,0.05) 0px 1px 2px -1px;
+        --shadow-card:  oklab(0 0 0 / 0.2) 0px 0px 0px 1px, rgba(51,51,51,0.05) 0px 2px 15px 0px;
+    }
+
+    /* ── Base ──────────────────────────────────────────── */
     #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    
-    /* Modern Typography & Smooth Scrolling */
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
-    html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif;
+    footer    {visibility: hidden;}
+
+    html, body, [class*="css"], .stApp {
+        font-family: var(--font-inter) !important;
+        background-color: var(--color-carbon-canvas) !important;
+        color: var(--color-bone);
     }
-    
-    /* Premium Hero Section with Animations (Dark Mode Compatible) */
+    .stApp { background-color: var(--color-carbon-canvas) !important; }
+    .main   { background-color: var(--color-carbon-canvas) !important; }
+    [data-testid="stAppViewContainer"] { background-color: var(--color-carbon-canvas) !important; }
+    [data-testid="stHeader"] { background-color: var(--color-carbon-canvas) !important; }
+
+    /* ── Sidebar ───────────────────────────────────────── */
+    [data-testid="stSidebar"] {
+        background-color: var(--color-obsidian) !important;
+        border-right: 1px solid var(--color-graphite-card);
+    }
+    [data-testid="stSidebar"] * { color: var(--color-bone) !important; }
+    [data-testid="stSidebar"] .stRadio label { font-family: var(--font-inter) !important; }
+    [data-testid="stSidebar"] hr { border-color: var(--color-iron-peak) !important; }
+
+    /* ── Hero ──────────────────────────────────────────── */
     .hero-container {
-        padding: 4rem 2rem;
-        text-align: center;
-        background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-        border-radius: 24px;
-        margin-bottom: 2.5rem;
-        border: 1px solid rgba(128, 128, 128, 0.2);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        animation: floatIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 48px 32px 40px;
+        border-bottom: 1px solid var(--color-iron-peak);
+        margin-bottom: 32px;
     }
-    .main-title {
-        font-size: 4rem !important;
-        font-weight: 800 !important;
-        letter-spacing: -1px;
-        color: var(--text-color) !important;
-        margin-bottom: 1rem !important;
-        line-height: 1.1;
-    }
-    .main-title span {
-        background: linear-gradient(to right, #4f46e5, #ec4899);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .sub-title {
-        font-size: 1.25rem;
-        color: var(--text-color);
-        opacity: 0.8;
+    .hero-title {
+        font-family: var(--font-serif);
+        font-size: 48px;
         font-weight: 400;
+        color: var(--color-bone);
+        letter-spacing: -0.025em;
+        line-height: 1.15;
+        margin: 0 0 12px 0;
+    }
+    .hero-title em {
+        color: var(--color-fog);
+        font-style: italic;
+    }
+    .hero-subtitle {
+        font-family: var(--font-inter);
+        font-size: 16px;
+        font-weight: 400;
+        color: var(--color-fog);
+        line-height: 1.5;
         max-width: 600px;
-        margin: 0 auto;
+        margin: 0;
+    }
+    .ridge-svg {
+        display: block;
+        width: 100%;
+        margin-top: 32px;
+        opacity: 0.5;
     }
 
-    /* Model Selection Radio Buttons - Premium Makeover */
-    div[role="radiogroup"] {
-        background-color: transparent;
-        padding: 1.5rem;
-        border-radius: 16px;
-        border: 1px solid #cbd5e1;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        margin-top: 1rem;
-    }
-    div[role="radiogroup"]:hover {
-        border-color: #6366f1;
-        box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
-        transform: translateY(-2px);
-    }
-    div[role="radiogroup"] label {
-        font-size: 1.15rem !important;
-        font-weight: 600 !important;
-        padding: 0.75rem 0.5rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border-radius: 8px;
-    }
-    div[role="radiogroup"] label:hover {
-        background-color: rgba(99, 102, 241, 0.05);
-        transform: translateX(6px);
-        color: #4f46e5 !important;
-    }
-
-    /* Verdict Cards with Glowing Accents */
-    .verdict-card {
-        padding: 3rem 2rem;
-        border-radius: 20px;
-        text-align: center;
-        margin: 2rem 0;
-        animation: scaleUp 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-        position: relative;
-        overflow: hidden;
-        background-color: transparent;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05);
-    }
-    .verdict-fake {
-        border-top: 8px solid #ef4444;
-    }
-    .verdict-real {
-        border-top: 8px solid #10b981;
-    }
-    .verdict-uncertain {
-        border-top: 8px solid #f59e0b;
-    }
-    .verdict-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.5px;
-    }
-    .fake-text { color: #ef4444; }
-    .real-text { color: #10b981; }
-    .uncertain-text { color: #f59e0b; }
-    .verdict-desc {
-        font-size: 1.2rem;
-        color: #64748b;
-        margin-bottom: 1.5rem;
-    }
-
-    /* Interactive Buttons - Enlarged */
-    .stButton>button {
-        border-radius: 12px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        transition: all 0.3s ease;
+    /* ── Section labels ────────────────────────────────── */
+    .section-label {
+        font-family: var(--font-inter);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        font-size: 1.1rem !important;
-        padding: 1rem 2rem !important;
+        color: var(--color-fog);
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--color-iron-peak);
     }
-    .stButton>button[kind="primary"] {
-        background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-        border: none;
-        padding: 1.2rem 2.5rem !important;
-        color: white;
-        font-size: 1.2rem !important;
-    }
-    .stButton>button[kind="primary"]:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 30px rgba(79, 70, 229, 0.4);
-    }
-    
 
-    /* Interactive Text Areas */
+    /* ── Streamlit headings → serif ────────────────────── */
+    h3, .stMarkdown h3 {
+        font-family: var(--font-serif) !important;
+        font-size: 28px !important;
+        font-weight: 400 !important;
+        color: var(--color-bone) !important;
+        letter-spacing: -0.7px !important;
+        line-height: 1.38 !important;
+        margin-bottom: 4px !important;
+    }
+    h4, .stMarkdown h4 {
+        font-family: var(--font-inter) !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.05em !important;
+        text-transform: uppercase !important;
+        color: var(--color-fog) !important;
+    }
+
+    /* ── Radio group ───────────────────────────────────── */
+    div[role="radiogroup"] {
+        background-color: var(--color-graphite-card);
+        padding: 12px;
+        border-radius: 4px;
+        border: 1px solid var(--color-iron-peak);
+        margin-top: 8px;
+        transition: border-color 0.15s ease;
+    }
+    div[role="radiogroup"]:hover { border-color: var(--color-pewter); }
+    div[role="radiogroup"] label {
+        font-family: var(--font-inter) !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        color: var(--color-bone) !important;
+        padding: 6px 8px;
+    }
+
+    /* ── Verdict cards ─────────────────────────────────── */
+    .verdict-card {
+        padding: 24px;
+        border-radius: 8px;
+        margin: 16px 0;
+        background: var(--color-graphite-card);
+        border: 1px solid var(--color-iron-peak);
+        box-shadow: var(--shadow-md);
+    }
+    .verdict-fake      { border-top: 2px solid #8b3030; }
+    .verdict-real      { border-top: 2px solid #2d6e4b; }
+    .verdict-uncertain { border-top: 2px solid var(--color-smoke); }
+
+    .verdict-title {
+        font-family: var(--font-serif);
+        font-size: 36px;
+        font-weight: 400;
+        letter-spacing: -0.9px;
+        line-height: 1.15;
+        margin-bottom: 8px;
+    }
+    .fake-text      { color: #c47c7c; }
+    .real-text      { color: #6aad8a; }
+    .uncertain-text { color: var(--color-fog); }
+    .verdict-desc {
+        font-family: var(--font-inter);
+        font-size: 14px;
+        font-weight: 400;
+        color: var(--color-fog);
+        line-height: 1.5;
+        margin-bottom: 16px;
+    }
+    .verdict-prob {
+        font-family: var(--font-inter);
+        font-size: 14px;
+        color: var(--color-bone);
+        margin-bottom: 8px;
+    }
+    .verdict-model {
+        font-family: var(--font-inter);
+        font-size: 10px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--color-smoke);
+    }
+
+    /* ── Ghost buttons ─────────────────────────────────── */
+    .stButton > button {
+        font-family: var(--font-inter) !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        border-radius: 4px !important;
+        border: 1px solid var(--color-bone) !important;
+        background: transparent !important;
+        color: var(--color-bone) !important;
+        padding: 8px 16px !important;
+        letter-spacing: 0em;
+        transition: background-color 0.12s ease, border-color 0.12s ease;
+        box-shadow: var(--shadow-card);
+    }
+    .stButton > button:hover {
+        background: var(--color-slate-elevated) !important;
+        border-color: var(--color-ash) !important;
+    }
+    .stButton > button[kind="primary"] {
+        border-color: var(--color-bone) !important;
+    }
+
+    /* ── Inputs ────────────────────────────────────────── */
     .stTextArea textarea, .stTextInput input {
-        border-radius: 12px;
-        border: 2px solid #e2e8f0;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-        background-color: transparent;
+        font-family: var(--font-inter) !important;
+        font-size: 14px !important;
+        background-color: var(--color-graphite-card) !important;
+        border: 1px solid var(--color-iron-peak) !important;
+        border-radius: 4px !important;
+        color: var(--color-bone) !important;
+        padding: 12px !important;
+        transition: border-color 0.12s ease, box-shadow 0.12s ease;
     }
     .stTextArea textarea {
+        font-family: var(--font-mono) !important;
+        font-size: 13px !important;
+        letter-spacing: 0.025em;
         resize: none !important;
     }
+    .stTextArea textarea::placeholder, .stTextInput input::placeholder {
+        color: var(--color-smoke) !important;
+    }
     .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        border-color: var(--color-voltage-blue) !important;
+        box-shadow: 0 0 0 2px rgba(43,127,255,0.15) !important;
+        outline: none;
     }
 
-    /* Keyframe Animations */
-    @keyframes floatIn {
-        0% { opacity: 0; transform: translateY(30px) scale(0.98); }
-        100% { opacity: 1; transform: translateY(0) scale(1); }
+    /* ── Tabs ──────────────────────────────────────────── */
+    .stTabs [data-baseweb="tab-list"] {
+        background: transparent !important;
+        border-bottom: 1px solid var(--color-iron-peak) !important;
+        gap: 0 !important;
     }
-    @keyframes scaleUp {
-        0% { opacity: 0; transform: scale(0.95) translateY(20px); }
-        100% { opacity: 1; transform: scale(1) translateY(0); }
+    .stTabs [data-baseweb="tab"] {
+        font-family: var(--font-inter) !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        color: var(--color-fog) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 12px 20px !important;
+        transition: color 0.12s ease;
+    }
+    .stTabs [aria-selected="true"] {
+        color: var(--color-bone) !important;
+        border-bottom: 1px solid var(--color-bone) !important;
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        color: var(--color-bone) !important;
     }
 
-    /* Metrics Refinement */
+    /* ── Metrics ───────────────────────────────────────── */
     [data-testid="stMetricValue"] {
-        font-weight: 800;
-        color: var(--text-color);
-        font-size: 2.5rem;
+        font-family: var(--font-inter) !important;
+        font-size: 28px !important;
+        font-weight: 600 !important;
+        color: var(--color-bone) !important;
+        letter-spacing: -0.7px;
     }
     [data-testid="stMetricLabel"] {
-        color: var(--text-color);
-        opacity: 0.7;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.5px;
+        font-family: var(--font-inter) !important;
+        font-size: 10px !important;
+        font-weight: 500 !important;
+        color: var(--color-fog) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        opacity: 1 !important;
     }
-</style>
-""", unsafe_allow_html=True)
+    [data-testid="stMetricDelta"] {
+        font-family: var(--font-inter) !important;
+        font-size: 11px !important;
+    }
+
+    /* ── Stat card ─────────────────────────────────────── */
+    .stat-card {
+        background: var(--color-graphite-card);
+        border: 1px solid var(--color-iron-peak);
+        border-radius: 8px;
+        padding: 16px;
+        height: 100%;
+        box-shadow: var(--shadow-md);
+    }
+    .stat-empty {
+        background: var(--color-graphite-card);
+        border: 1px solid var(--color-iron-peak);
+        border-radius: 8px;
+        padding: 24px 16px;
+        text-align: center;
+        height: 100%;
+        box-shadow: var(--shadow-md);
+    }
+    .stat-empty-text {
+        font-family: var(--font-inter);
+        font-size: 13px;
+        color: var(--color-smoke);
+        font-style: italic;
+    }
+
+    /* ── Indicator panels (word analysis) ──────────────── */
+    .indicator-panel {
+        background: var(--color-graphite-card);
+        border: 1px solid var(--color-iron-peak);
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: var(--shadow-md);
+    }
+    .indicator-fake { border-top: 2px solid #8b3030; }
+    .indicator-real { border-top: 2px solid #2d6e4b; }
+    .indicator-header {
+        font-family: var(--font-inter);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+    .indicator-fake .indicator-header { color: #c47c7c; }
+    .indicator-real .indicator-header { color: #6aad8a; }
+    .indicator-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid var(--color-iron-peak);
+    }
+    .indicator-row:last-child { border-bottom: none; }
+    .indicator-word {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--color-bone);
+        letter-spacing: 0.05em;
+    }
+    .indicator-score {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--color-fog);
+    }
+    .indicator-empty {
+        font-family: var(--font-inter);
+        font-size: 13px;
+        color: var(--color-smoke);
+    }
+
+    /* ── Caption / helper text ─────────────────────────── */
+    .stCaption, small {
+        font-family: var(--font-inter) !important;
+        font-size: 10px !important;
+        color: var(--color-fog) !important;
+        letter-spacing: 0.025em;
+    }
+
+    /* ── Divider ───────────────────────────────────────── */
+    hr { border-color: var(--color-iron-peak) !important; margin: 24px 0 !important; }
+
+    /* ── Alerts / info boxes ───────────────────────────── */
+    [data-testid="stAlert"] {
+        background: var(--color-graphite-card) !important;
+        border: 1px solid var(--color-iron-peak) !important;
+        border-radius: 4px !important;
+        font-family: var(--font-inter) !important;
+        font-size: 13px !important;
+        color: var(--color-bone) !important;
+    }
+    /* Spinner */
+    .stSpinner > div { border-top-color: var(--color-voltage-blue) !important; }
+</style>""", unsafe_allow_html=True)
+
 
 # ── Load Models ───────────────────────────────────────────────────────────────
 
@@ -307,13 +501,7 @@ def get_top_fake_words(text: str, vectorizer, model, n: int = 10):
 
 # ── UI ────────────────────────────────────────────────────────────────────────
 
-# Hero Section
-st.markdown("""
-<div class="hero-container">
-    <h1 class="main-title">Shield <span>| Fake News Detector</span></h1>
-    <p class="sub-title">Advanced NLP & Machine Learning algorithms for instant misinformation detection.</p>
-</div>
-""", unsafe_allow_html=True)
+
 
 # ── Example Texts ──────────────────────────────────────────────────────────────
 FAKE_EXAMPLE = """BREAKING: Scientists CONFIRM that 5G towers are spreading COVID-19!!! 
@@ -333,31 +521,42 @@ from its peak, it remains well above the committee's long-run goal."""
 if "article_text" not in st.session_state:
     st.session_state["article_text"] = ""
 
+# ── Hero ────────────────────────────────────────────────────────────────────
+st.markdown("""
+<div class="hero-container">
+    <h1 class="hero-title">Shield &nbsp;<em>Fake News Detector</em></h1>
+    <p class="hero-subtitle">Paste an article below. The model returns a classification with a confidence score, word-level explanation, and sentiment breakdown.</p>
+    <svg class="ridge-svg" viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="0,36 80,30 160,20 220,32 310,10 380,26 460,6 540,22 620,4 700,18 780,12 860,28 940,8 1020,22 1100,14 1200,20"
+                  fill="none" stroke="#a4a19b" stroke-width="1"/>
+    </svg>
+</div>
+""", unsafe_allow_html=True)
+
 # Sidebar
 with st.sidebar:
-    st.markdown("<h2 style='text-align: center; margin-bottom: 2rem;'>🛡️ Shield Settings</h2>", unsafe_allow_html=True)
-    
-    mode = st.radio(
-        "🧠 Detection Engine",
-        options=["⚡ Fast (TF-IDF + LR)", "🎯 Accurate (DistilBERT)"],
-        help="Fast mode is instantaneous. Accurate mode requires the trained BERT model."
+    st.markdown(
+        "<p class='section-label' style='margin-top:8px;'>Shield</p>",
+        unsafe_allow_html=True,
     )
-
-    st.markdown("<br><hr>", unsafe_allow_html=True)
-    st.subheader("📚 Quick Test Articles")
-    st.write("Click a button below to load an example article into the text area.")
-    
-    if st.button("Load Fake News Example 🚨", use_container_width=True):
+    mode = st.radio(
+        "Detection Engine",
+        options=["Fast (TF-IDF + LR)", "Accurate (DistilBERT)"],
+        help="Fast mode is instantaneous. Accurate mode requires the trained BERT model.",
+        label_visibility="collapsed",
+    )
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<p class='section-label'>Test Articles</p>", unsafe_allow_html=True)
+    st.caption("Load a sample into the text area.")
+    if st.button("Load Fake News Sample", use_container_width=True):
         st.session_state["article_text"] = FAKE_EXAMPLE
-    if st.button("Load Real News Example ✅", use_container_width=True):
+    if st.button("Load Real News Sample", use_container_width=True):
         st.session_state["article_text"] = REAL_EXAMPLE
-    
-    st.markdown("<br><hr>", unsafe_allow_html=True)
-    st.caption("Developed for educational purposes. Always verify news with multiple sources.")
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.caption("Built for educational purposes. Verify news with multiple sources.")
 
 # Main input area
-st.markdown("### 📰 Input Article")
-st.write("Paste the text of the article you want to verify below.")
+st.markdown("<p class='section-label'>Input Article</p>", unsafe_allow_html=True)
 
 col_input, col_stats = st.columns([3, 1])
 
@@ -369,45 +568,45 @@ with col_input:
         height=200,
         placeholder="Paste the full article text here...",
     )
-    analyze_btn = st.button("🔍 Analyze Authenticity", type="primary", use_container_width=True)
+    analyze_btn = st.button("Analyze", type="primary", use_container_width=True)
 
 with col_stats:
     if text_input:
         word_count = len(text_input.split())
         char_count = len(text_input)
         sent_count = len([s for s in text_input.split(".") if s.strip()])
-        st.markdown("<div style='padding: 1rem; background: rgba(128,128,128,0.1); border-radius: 10px; height: 100%;'>", unsafe_allow_html=True)
+        st.markdown("<div class='stat-card'>", unsafe_allow_html=True)
         st.metric("Words", f"{word_count:,}")
         st.metric("Characters", f"{char_count:,}")
         st.metric("Sentences", f"{sent_count:,}")
         st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.markdown("""
-        <div style='padding: 2rem 1rem; text-align: center; background: rgba(128,128,128,0.1); border-radius: 10px; opacity: 0.7;'>
-            <i>Waiting for text...</i>
+        <div class="stat-empty">
+            <p class="stat-empty-text">Waiting for input</p>
         </div>
         """, unsafe_allow_html=True)
 
 # Analysis Section
 if analyze_btn:
     if not text_input or len(text_input.strip()) < 50:
-        st.error("⚠️ Please enter at least 50 characters of text to analyze.")
+        st.error("Please enter at least 50 characters of text to analyze.")
     else:
         combined_text = combine_title_text(title_input, text_input)
 
-        with st.spinner("🤖 Processing with AI models..."):
+        with st.spinner("Analyzing..."):
             # Load models
             vectorizer, lr_model = load_fast_model()
 
             if "DistilBERT" in mode:
                 bert_tokenizer, bert_model, bert_device = load_bert_model()
                 if bert_model is None:
-                    st.warning("⚠️ BERT model not found. Running in Fast Mode (TF-IDF + LR) instead.")
-                    mode = "⚡ Fast (TF-IDF + LR)"
+                    st.warning("BERT model not found. Falling back to Fast Mode (TF-IDF + LR).")
+                    mode = "Fast (TF-IDF + LR)"
 
             # Get prediction
             if vectorizer is None:
-                st.error("❌ Fast model not found. Please train models first.")
+                st.error("Fast model not found. Please train the models first.")
                 st.stop()
 
             if "DistilBERT" in mode and bert_model is not None:
@@ -431,117 +630,133 @@ if analyze_btn:
 
         # Organize results into tabs for a cleaner UI
         tab_verdict, tab_words, tab_sentiment, tab_linguistics = st.tabs([
-            "🎯 Verdict & Confidence", 
-            "🔑 Word Analysis", 
-            "💬 Sentiment", 
-            "📐 Linguistics"
+            "Verdict",
+            "Word Analysis",
+            "Sentiment",
+            "Linguistics"
         ])
 
         with tab_verdict:
-            # ── Beautiful Verdict Card ──────────────────────────────────────────
             if certainty == "fake":
                 st.markdown(f"""
                 <div class="verdict-card verdict-fake">
-                    <div class="verdict-title fake-text">🚨 Likely Fake News</div>
-                    <div class="verdict-desc">Our AI detected significant patterns associated with misinformation.</div>
-                    <p style="font-size: 1.2rem;">Confidence: <strong class="fake-text">{prob_fake*100:.1f}%</strong> probability</p>
-                    <p style="color: #999; font-size: 0.9rem;">Powered by {model_used}</p>
+                    <div class="verdict-title fake-text">Likely Fake</div>
+                    <div class="verdict-desc">The model found patterns consistent with misinformation in this text.</div>
+                    <p class="verdict-prob">Misinformation probability &nbsp;<strong class="fake-text">{prob_fake*100:.1f}%</strong></p>
+                    <p class="verdict-model">Engine &mdash; {model_used}</p>
                 </div>""", unsafe_allow_html=True)
             elif certainty == "real":
                 st.markdown(f"""
                 <div class="verdict-card verdict-real">
-                    <div class="verdict-title real-text">✅ Likely Real News</div>
-                    <div class="verdict-desc">The content aligns with patterns found in factual reporting.</div>
-                    <p style="font-size: 1.2rem;">Confidence: <strong class="real-text">{prob_real*100:.1f}%</strong> probability</p>
-                    <p style="color: #999; font-size: 0.9rem;">Powered by {model_used}</p>
+                    <div class="verdict-title real-text">Likely Factual</div>
+                    <div class="verdict-desc">The text matches patterns found in factual news reporting.</div>
+                    <p class="verdict-prob">Factual probability &nbsp;<strong class="real-text">{prob_real*100:.1f}%</strong></p>
+                    <p class="verdict-model">Engine &mdash; {model_used}</p>
                 </div>""", unsafe_allow_html=True)
             else:
                 st.markdown(f"""
                 <div class="verdict-card verdict-uncertain">
-                    <div class="verdict-title uncertain-text">⚠️ Uncertain</div>
-                    <div class="verdict-desc">This article is borderline. It could be opinion, satire, or highly ambiguous.</div>
-                    <p style="font-size: 1.2rem;">Fake Score: <strong class="uncertain-text">{prob_fake*100:.1f}%</strong></p>
-                    <p style="color: #999; font-size: 0.9rem;">Powered by {model_used}</p>
+                    <div class="verdict-title uncertain-text">Uncertain</div>
+                    <div class="verdict-desc">Score falls in the ambiguous range. This may be opinion, satire, or mixed content.</div>
+                    <p class="verdict-prob">Misinformation score &nbsp;<strong class="uncertain-text">{prob_fake*100:.1f}%</strong></p>
+                    <p class="verdict-model">Engine &mdash; {model_used}</p>
                 </div>""", unsafe_allow_html=True)
 
-            # Visual charts side-by-side
+            # Charts
             c1, c2 = st.columns(2)
+            _dark_layout = dict(
+                paper_bgcolor="#1f1f1f",
+                plot_bgcolor="#1f1f1f",
+                font=dict(family="Inter", color="#eeeeee"),
+                margin=dict(l=20, r=20, t=50, b=20),
+                height=280,
+            )
             with c1:
+                _bar_color = "#8b3030" if label == 1 else "#2d6e4b"
                 fig_gauge = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=prob_fake * 100,
                     domain={"x": [0, 1], "y": [0, 1]},
-                    title={"text": "Misinformation Probability", "font": {"size": 18, "family": "Inter"}},
-                    number={"suffix": "%", "font": {"weight": "bold"}},
+                    title={"text": "Misinformation Probability", "font": {"size": 13, "family": "Inter", "color": "#a4a19b"}},
+                    number={"suffix": "%", "font": {"size": 36, "color": "#eeeeee"}},
                     gauge={
-                        "axis": {"range": [0, 100], "tickwidth": 1},
-                        "bar": {"color": "#ff4757" if label == 1 else "#2ed573"},
+                        "axis": {"range": [0, 100], "tickwidth": 1, "tickcolor": "#323232", "tickfont": {"color": "#a4a19b", "size": 10}},
+                        "bar": {"color": _bar_color},
+                        "bgcolor": "#1f1f1f",
+                        "borderwidth": 1,
+                        "bordercolor": "#323232",
                         "steps": [
-                            {"range": [0, 35],  "color": "#e6ffec"},
-                            {"range": [35, 65], "color": "#fff7db"},
-                            {"range": [65, 100],"color": "#fff5f5"},
+                            {"range": [0, 35],   "color": "#1a2a1f"},
+                            {"range": [35, 65],  "color": "#1f1f1f"},
+                            {"range": [65, 100], "color": "#2a1a1a"},
                         ],
                         "threshold": {
-                            "line": {"color": "#333", "width": 3},
+                            "line": {"color": "#5e5d59", "width": 2},
                             "thickness": 0.75,
                             "value": 50,
                         },
                     },
                 ))
-                fig_gauge.update_layout(height=280, margin=dict(l=20, r=20, t=50, b=20), font=dict(family="Inter"))
+                fig_gauge.update_layout(**_dark_layout)
                 st.plotly_chart(fig_gauge, use_container_width=True)
             with c2:
                 fig_bar = go.Figure(data=[
                     go.Bar(
                         x=["Factual", "Fake"],
                         y=[prob_real * 100, prob_fake * 100],
-                        marker_color=["#2ed573", "#ff4757"],
+                        marker_color=["#2d6e4b", "#8b3030"],
+                        marker_line_color="#323232",
+                        marker_line_width=1,
                         text=[f"{prob_real*100:.1f}%", f"{prob_fake*100:.1f}%"],
                         textposition="auto",
-                        textfont=dict(size=14, color="white", family="Inter", weight="bold")
+                        textfont=dict(size=13, color="#eeeeee", family="Inter"),
                     )
                 ])
                 fig_bar.update_layout(
-                    title=dict(text="Class Probabilities", font=dict(size=18, family="Inter")),
-                    yaxis=dict(range=[0, 100], title="Probability (%)"),
-                    height=280,
-                    margin=dict(l=20, r=20, t=50, b=20),
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    font=dict(family="Inter")
+                    title=dict(text="Class Probabilities", font=dict(size=13, family="Inter", color="#a4a19b")),
+                    yaxis=dict(range=[0, 100], title="Probability (%)", gridcolor="#262626", tickfont=dict(color="#a4a19b", size=10)),
+                    xaxis=dict(tickfont=dict(color="#eeeeee", size=12)),
+                    **_dark_layout,
                 )
                 st.plotly_chart(fig_bar, use_container_width=True)
 
         with tab_words:
             if "DistilBERT" not in mode:
                 st.markdown("### Model Interpretability")
-                st.write("These are the most impactful words found in your text that heavily influenced the model's decision.")
+                st.caption("The words below most influenced the model's decision. Scored by TF-IDF weight times logistic regression coefficient.")
                 fake_words, real_words = get_top_fake_words(combined_text, vectorizer, lr_model)
-                
+
                 cw1, cw2 = st.columns(2)
                 with cw1:
-                    st.markdown("<div style='background: #fff5f5; padding: 1.5rem; border-radius: 12px; border-top: 4px solid #ff4757;'>", unsafe_allow_html=True)
-                    st.markdown("<h4 style='color: #ff4757; margin-top: 0;'>🔴 Fake Indicators</h4>", unsafe_allow_html=True)
-                    if fake_words:
-                        for word, score in fake_words[:8]:
-                            st.markdown(f"**`{word}`** <span style='float:right; color:#888;'>+{score:.2f}</span>", unsafe_allow_html=True)
-                    else:
-                        st.write("No strong fake indicators found.")
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    rows_fake = "".join(
+                        f"<div class='indicator-row'><span class='indicator-word'>{w}</span><span class='indicator-score'>+{s:.2f}</span></div>"
+                        for w, s in fake_words[:8]
+                    ) if fake_words else "<p class='indicator-empty'>No strong indicators found.</p>"
+                    st.markdown(
+                        f"<div class='indicator-panel indicator-fake'>"
+                        f"<div class='indicator-header'>Fake Indicators</div>"
+                        f"{rows_fake}"
+                        f"</div>",
+                        unsafe_allow_html=True,
+                    )
                 with cw2:
-                    st.markdown("<div style='background: #f4fff8; padding: 1.5rem; border-radius: 12px; border-top: 4px solid #2ed573;'>", unsafe_allow_html=True)
-                    st.markdown("<h4 style='color: #2ed573; margin-top: 0;'>🟢 Real Indicators</h4>", unsafe_allow_html=True)
-                    if real_words:
-                        for word, score in real_words[:8]:
-                            st.markdown(f"**`{word}`** <span style='float:right; color:#888;'>+{score:.2f}</span>", unsafe_allow_html=True)
-                    else:
-                        st.write("No strong real indicators found.")
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    rows_real = "".join(
+                        f"<div class='indicator-row'><span class='indicator-word'>{w}</span><span class='indicator-score'>+{s:.2f}</span></div>"
+                        for w, s in real_words[:8]
+                    ) if real_words else "<p class='indicator-empty'>No strong indicators found.</p>"
+                    st.markdown(
+                        f"<div class='indicator-panel indicator-real'>"
+                        f"<div class='indicator-header'>Real Indicators</div>"
+                        f"{rows_real}"
+                        f"</div>",
+                        unsafe_allow_html=True,
+                    )
             else:
-                st.info("ℹ️ Word-level interpretability is currently only available in Fast Mode (Logistic Regression). BERT processes text as deep contextual embeddings rather than isolated words.")
+                st.info("Word-level explanation is only available in Fast Mode (Logistic Regression). DistilBERT uses contextual embeddings rather than individual token weights.")
 
         with tab_sentiment:
-            st.markdown("### VADER Sentiment Breakdown")
-            st.write("Fake news often uses highly charged, extreme emotional language (fear-mongering or overly positive hype).")
+            st.markdown("### VADER Sentiment")
+            st.caption("Fake news often uses highly charged emotional language. High compound scores in either direction warrant scrutiny.")
             
             sent_df  = extract_sentiment_features(pd.Series([text_input]))
             sent_row = sent_df.iloc[0]
@@ -554,41 +769,47 @@ if analyze_btn:
                          delta="Extreme" if abs(sent_row["vader_compound"]) > 0.6 else "Moderate",
                          delta_color="inverse")
 
-            fig_sent = px.bar(
-                x=["Negative", "Neutral", "Positive"],
-                y=[sent_row["vader_neg"], sent_row["vader_neu"], sent_row["vader_pos"]],
-                color=["Negative", "Neutral", "Positive"],
-                color_discrete_map={"Negative": "#ff4757", "Neutral": "#a4b0be", "Positive": "#2ed573"},
-            )
+            fig_sent = go.Figure(data=[
+                go.Bar(
+                    x=["Negative", "Neutral", "Positive"],
+                    y=[sent_row["vader_neg"], sent_row["vader_neu"], sent_row["vader_pos"]],
+                    marker_color=["#8b3030", "#5e5d59", "#2d6e4b"],
+                    marker_line_color="#323232",
+                    marker_line_width=1,
+                    text=[f"{sent_row['vader_neg']:.2f}", f"{sent_row['vader_neu']:.2f}", f"{sent_row['vader_pos']:.2f}"],
+                    textposition="auto",
+                    textfont=dict(size=12, color="#eeeeee", family="Inter"),
+                )
+            ])
             fig_sent.update_layout(
-                height=250, 
+                height=250,
                 showlegend=False,
-                margin=dict(l=10, r=10, t=30, b=10),
-                plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(family="Inter"),
-                yaxis_title="Proportion"
+                margin=dict(l=10, r=10, t=20, b=10),
+                paper_bgcolor="#1f1f1f",
+                plot_bgcolor="#1f1f1f",
+                font=dict(family="Inter", color="#eeeeee"),
+                yaxis=dict(title="Proportion", gridcolor="#262626", tickfont=dict(color="#a4a19b", size=10)),
+                xaxis=dict(tickfont=dict(color="#eeeeee", size=12)),
             )
             st.plotly_chart(fig_sent, use_container_width=True)
 
             if abs(sent_row["vader_compound"]) > 0.6:
-                st.warning(f"⚠️ **High emotional intensity detected** (Score: {sent_row['vader_compound']:.2f}). Be cautious: sensationalism is often used to trigger emotional sharing.")
+                st.warning(f"High emotional intensity detected (score: {sent_row['vader_compound']:.2f}). Sensationalist language is a common indicator in misinformation.")
 
         with tab_linguistics:
-            st.markdown("### Structural & Linguistic Traits")
-            st.write("Compare the writing style of this article against typical journalistic standards.")
-            
+            st.markdown("### Linguistic Traits")
+            st.caption("Structural signals. Fake news often shows excessive punctuation, ALL CAPS, and reduced vocabulary diversity.")
+
             ling_df  = extract_linguistic_features(pd.Series([combined_text]))
             ling_row = ling_df.iloc[0]
 
             cl1, cl2, cl3 = st.columns(3)
             with cl1:
-                st.metric("Avg Word Length", f"{ling_row['avg_word_length']:.2f} chars")
-                st.metric("Exclamation Marks (!)", ling_row["exclamation_count"])
+                st.metric("Avg Word Length", f"{ling_row['avg_word_length']:.2f} ch")
+                st.metric("Exclamation Marks", ling_row["exclamation_count"])
             with cl2:
                 st.metric("Unique Word Ratio", f"{ling_row['unique_word_ratio']:.3f}")
-                st.metric("Question Marks (?)", ling_row["question_count"])
+                st.metric("Question Marks", ling_row["question_count"])
             with cl3:
-                st.metric("Avg Sentence Length", f"{ling_row['avg_sentence_length']:.1f} words")
+                st.metric("Avg Sentence Length", f"{ling_row['avg_sentence_length']:.1f} w")
                 st.metric("Capitalization Ratio", f"{ling_row['capital_ratio']:.4f}")
-            
-            st.caption("Note: Fake news often features excessive exclamation marks, ALL CAPS, and lower vocabulary diversity.")

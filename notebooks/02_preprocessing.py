@@ -116,7 +116,7 @@ ax.set_title("Text Length: Before vs After Preprocessing", fontsize=13, fontweig
 ax.legend()
 plt.tight_layout()
 plt.savefig("../reports/figures/05_preprocessing_effect.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %% [markdown]
 # ## 5. Empty Text Check

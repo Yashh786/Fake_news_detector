@@ -140,7 +140,7 @@ disp.plot(ax=ax, colorbar=False, cmap="Blues")
 ax.set_title("Confusion Matrix — DistilBERT (Test Set)", fontsize=13, fontweight="bold")
 plt.tight_layout()
 plt.savefig("../reports/figures/13_bert_confusion.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %%
 # ROC curve
@@ -158,7 +158,7 @@ ax.set_title("ROC Curve — DistilBERT", fontsize=13, fontweight="bold")
 ax.legend()
 plt.tight_layout()
 plt.savefig("../reports/figures/14_bert_roc.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %% [markdown]
 # ## 5. Confidence Analysis
@@ -181,7 +181,7 @@ ax.set_title("BERT Prediction Confidence Distribution", fontsize=13, fontweight=
 ax.legend()
 plt.tight_layout()
 plt.savefig("../reports/figures/15_bert_confidence.png", dpi=150, bbox_inches="tight")
-plt.show()
+# plt.show()
 
 # %%
 # Show the most uncertain predictions
@@ -244,7 +244,7 @@ try:
     ax.legend()
     plt.tight_layout()
     plt.savefig("../reports/figures/16_ml_vs_bert.png", dpi=150, bbox_inches="tight")
-    plt.show()
+    # plt.show()
 
 except Exception as e:
     print(f"Comparison skipped: {e}")
