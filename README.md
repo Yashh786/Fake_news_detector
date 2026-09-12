@@ -1,3 +1,14 @@
+---
+title: Shield — Fake News Detector
+emoji: 🛡️
+colorFrom: green
+colorTo: gray
+sdk: streamlit
+sdk_version: "1.45.1"
+app_file: app/app.py
+pinned: false
+---
+
 # 🔍 Automated Fake News Detection System
 ### NLP · TF-IDF · DistilBERT · Streamlit · RTX 4060 GPU
 

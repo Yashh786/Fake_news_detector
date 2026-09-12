@@ -8,9 +8,8 @@ data/raw/*.zip
 data/processed/*.npz
 data/processed/*.npy
 data/processed/*.csv
-# Large model files (too big for GitHub — use Hugging Face Hub or Git LFS)
-models/randomforest_tfidf.pkl
-models/bert_finetuned/
+# Large files are tracked via Git LFS (see .gitattributes)
+# bert_finetuned/ and randomforest_tfidf.pkl are pushed via LFS to HF Spaces
 reports/figures/*.png
 *.egg-info/
 .ipynb_checkpoints/

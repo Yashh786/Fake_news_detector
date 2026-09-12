@@ -1,0 +1,5 @@
+# Git LFS tracking for large model files
+# HF Spaces uses Git LFS natively for files > 10 MB
+
+models/bert_finetuned/model.safetensors filter=lfs diff=lfs merge=lfs -text
+models/randomforest_tfidf.pkl filter=lfs diff=lfs merge=lfs -text
