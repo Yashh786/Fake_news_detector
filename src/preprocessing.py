@@ -18,7 +18,6 @@ import logging
 from typing import List, Optional
 
 import nltk
-import spacy
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
@@ -55,11 +54,15 @@ def _get_stop_words() -> set:
     return _stop_words
 
 
-def _get_spacy() -> spacy.Language:
+def _get_spacy():
     global _spacy_model
     if _spacy_model is None:
         try:
-            _spacy_model = spacy.load("en_core_web_sm", disable=["parser"])
+            import spacy as _spacy
+            _spacy_model = _spacy.load("en_core_web_sm", disable=["parser"])
+        except ImportError:
+            logger.warning("spaCy is not installed. Advanced NER preprocessing unavailable.")
+            _spacy_model = None
         except OSError:
             logger.warning("spaCy model not found. Run: python -m spacy download en_core_web_sm")
             _spacy_model = None

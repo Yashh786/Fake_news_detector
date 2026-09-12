@@ -8,7 +8,8 @@ data/raw/*.zip
 data/processed/*.npz
 data/processed/*.npy
 data/processed/*.csv
-models/*.pkl
+# Large model files (too big for GitHub — use Hugging Face Hub or Git LFS)
+models/randomforest_tfidf.pkl
 models/bert_finetuned/
 reports/figures/*.png
 *.egg-info/

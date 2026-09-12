@@ -986,11 +986,37 @@ with st.sidebar:
         "display:block;margin-bottom:16px;'>Shield</span>",
         unsafe_allow_html=True,
     )
-    mode = st.radio(
-        "Detection Engine",
-        options=["Fast (TF-IDF + LR)", "Accurate (DistilBERT)"],
-        help="Fast mode is instantaneous. Accurate mode requires the trained BERT model.",
-    )
+
+    # Check BERT availability once (fast, cached)
+    _bert_model_dir = os.path.join(os.path.dirname(__file__), "..", "models", "bert_finetuned")
+    _bert_available = os.path.exists(os.path.join(_bert_model_dir, "model.safetensors"))
+
+    if _bert_available:
+        mode = st.radio(
+            "Detection Engine",
+            options=["Fast (TF-IDF + LR)", "Accurate (DistilBERT)"],
+            help="Fast mode is instantaneous. Accurate mode uses a fine-tuned DistilBERT model.",
+        )
+    else:
+        mode = "Fast (TF-IDF + LR)"
+        st.radio(
+            "Detection Engine",
+            options=["Fast (TF-IDF + LR)"],
+            help="Fast mode uses TF-IDF + Logistic Regression.",
+        )
+        st.markdown(
+            "<div style='border:1px solid rgba(144,252,149,0.2);border-radius:2px;"
+            "padding:10px 12px;margin-top:4px;'>"
+            "<span style='font-family:Geist Mono,monospace;font-size:10px;"
+            "letter-spacing:0.72px;text-transform:uppercase;color:#90fc95;"
+            "display:block;margin-bottom:4px;'>DistilBERT</span>"
+            "<span style='font-family:Geist,Inter,sans-serif;font-size:12px;"
+            "color:rgba(255,255,255,0.55);line-height:1.5;'>"
+            "Not available in this environment. Run locally with the trained model for BERT inference."
+            "</span></div>",
+            unsafe_allow_html=True,
+        )
+
     st.divider()
     st.markdown(
         "<span style='font-family:Geist Mono,monospace;font-size:11px;"
