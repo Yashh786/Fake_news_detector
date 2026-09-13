@@ -1,3 +1,0 @@
-# System packages for Streamlit Cloud (Ubuntu 22.04)
-# Ensures SSL certificates work for external API calls
-ca-certificates
