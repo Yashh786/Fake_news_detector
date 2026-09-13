@@ -14,3 +14,5 @@ reports/figures/*.png
 *.egg-info/
 .ipynb_checkpoints/
 .DS_Store
+# Streamlit secrets (contains API tokens — never commit)
+.streamlit/secrets.toml

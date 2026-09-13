@@ -13,10 +13,8 @@ spacy
 vaderSentiment
 scipy
 
-# ─── Deep Learning (CPU build — works on HF Spaces free tier) ───────────────
-torch==2.3.1
-transformers
-sentencepiece
+# ─── BERT via HF Inference API (no local torch — keeps memory < 500 MB) ─────
+requests
 
 # ─── Visualization ────────────────────────────────────────────────────────────
 plotly

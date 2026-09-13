@@ -640,21 +640,70 @@ def load_fast_model():
         return None, None
 
 
-@st.cache_resource
-def load_bert_model():
+# ─────────────────────────────────────────────────────────────────────────────
+# HF INFERENCE API — DistilBERT (no local torch required)
+# Label mapping confirmed from training: LABEL_0 = REAL (0), LABEL_1 = FAKE (1)
+# ─────────────────────────────────────────────────────────────────────────────
+_HF_API_URL = "https://api-inference.huggingface.co/models/{repo_id}"
+
+
+def _get_hf_token() -> str:
+    """Read HF token from Streamlit secrets or environment variable."""
     try:
-        from transformers import AutoTokenizer, AutoModelForSequenceClassification
-        import torch
-        model_dir = os.path.join(os.path.dirname(__file__), "..", "models", "bert_finetuned")
-        if not os.path.exists(model_dir):
-            return None, None, None
-        device    = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        tokenizer = AutoTokenizer.from_pretrained(model_dir)
-        model     = AutoModelForSequenceClassification.from_pretrained(model_dir).to(device)
-        model.eval()
-        return tokenizer, model, device
+        return st.secrets["HF_TOKEN"]
     except Exception:
-        return None, None, None
+        return os.environ.get("HF_TOKEN", "")
+
+
+def _get_hf_repo_id() -> str:
+    """Read HF model repo ID from Streamlit secrets or environment variable."""
+    try:
+        return st.secrets["HF_MODEL_REPO"]
+    except Exception:
+        return os.environ.get("HF_MODEL_REPO", "")
+
+
+def bert_api_available() -> bool:
+    """Returns True if we have both an HF token and a model repo configured."""
+    return bool(_get_hf_token()) and bool(_get_hf_repo_id())
+
+
+def predict_bert_api(text: str):
+    """
+    Call HF Inference API for DistilBERT classification.
+    Returns (label: int, prob_fake: float) matching the local predict_bert() contract.
+    Raises RuntimeError on API errors.
+    """
+    import requests as _req
+    import time
+
+    cleaned  = clean_text(text)
+    token    = _get_hf_token()
+    repo_id  = _get_hf_repo_id()
+    url      = _HF_API_URL.format(repo_id=repo_id)
+    headers  = {"Authorization": f"Bearer {token}"}
+    payload  = {"inputs": cleaned[:1024]}   # API input limit safety
+
+    resp = _req.post(url, headers=headers, json=payload, timeout=30)
+
+    # Handle cold-start: model loading (503 with 'loading' in body)
+    if resp.status_code == 503:
+        body = resp.json()
+        estimated = body.get("estimated_time", 20)
+        time.sleep(min(float(estimated), 25))
+        resp = _req.post(url, headers=headers, json=payload, timeout=60)
+
+    if not resp.ok:
+        raise RuntimeError(f"HF API error {resp.status_code}: {resp.text[:200]}")
+
+    result = resp.json()
+    # API returns: [[{"label": "LABEL_0", "score": ...}, {"label": "LABEL_1", "score": ...}]]
+    if isinstance(result, list) and isinstance(result[0], list):
+        result = result[0]
+    scores = {item["label"]: item["score"] for item in result}
+    prob_fake = scores.get("LABEL_1", scores.get("1", 0.5))
+    label     = 1 if prob_fake >= 0.5 else 0
+    return label, float(prob_fake)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -666,19 +715,6 @@ def predict_fast(text, vectorizer, model):
     label   = model.predict(vec)[0]
     prob    = model.predict_proba(vec)[0]
     return label, prob[1]
-
-
-def predict_bert(text, tokenizer, model, device):
-    import torch
-    from torch.nn.functional import softmax
-    cleaned = clean_text(text)
-    inputs  = tokenizer(cleaned, return_tensors="pt", max_length=256,
-                         padding="max_length", truncation=True)
-    inputs  = {k: v.to(device) for k, v in inputs.items()}
-    with torch.no_grad():
-        logits = model(**inputs).logits
-    probs = softmax(logits, dim=-1).cpu().numpy()[0]
-    return int(probs.argmax()), probs[1]
 
 
 def get_top_fake_words(text, vectorizer, model, n=10):
@@ -987,15 +1023,14 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    # Check BERT availability once (fast, cached)
-    _bert_model_dir = os.path.join(os.path.dirname(__file__), "..", "models", "bert_finetuned")
-    _bert_available = os.path.exists(os.path.join(_bert_model_dir, "model.safetensors"))
+    # Check BERT availability — uses HF Inference API (no local torch)
+    _bert_available = bert_api_available()
 
     if _bert_available:
         mode = st.radio(
             "Detection Engine",
             options=["Fast (TF-IDF + LR)", "Accurate (DistilBERT)"],
-            help="Fast mode is instantaneous. Accurate mode uses a fine-tuned DistilBERT model.",
+            help="Fast mode is instantaneous. Accurate mode uses a fine-tuned DistilBERT via HF Inference API.",
         )
     else:
         mode = "Fast (TF-IDF + LR)"
@@ -1012,7 +1047,7 @@ with st.sidebar:
             "display:block;margin-bottom:4px;'>DistilBERT</span>"
             "<span style='font-family:Geist,Inter,sans-serif;font-size:12px;"
             "color:rgba(255,255,255,0.55);line-height:1.5;'>"
-            "Not available in this environment. Run locally with the trained model for BERT inference."
+            "Not configured in this environment. Set HF_TOKEN and HF_MODEL_REPO secrets to enable."
             "</span></div>",
             unsafe_allow_html=True,
         )
@@ -1103,19 +1138,19 @@ if analyze_btn:
         with st.spinner("Analyzing…"):
             vectorizer, lr_model = load_fast_model()
 
-            if "DistilBERT" in mode:
-                bert_tokenizer, bert_model, bert_device = load_bert_model()
-                if bert_model is None:
-                    st.warning("BERT model not found. Falling back to Fast Mode.")
-                    mode = "Fast (TF-IDF + LR)"
-
             if vectorizer is None:
                 st.error("Fast model not found. Please run the training script first.")
                 st.stop()
 
-            if "DistilBERT" in mode and bert_model is not None:
-                label, prob_fake = predict_bert(combined_text, bert_tokenizer, bert_model, bert_device)
-                model_used = "DistilBERT"
+            if "DistilBERT" in mode:
+                try:
+                    with st.spinner("Contacting DistilBERT model (may take ~20s on first request)…"):
+                        label, prob_fake = predict_bert_api(combined_text)
+                    model_used = "DistilBERT (HF API)"
+                except Exception as _bert_err:
+                    st.warning(f"DistilBERT API unavailable — falling back to Fast Mode. ({_bert_err})")
+                    label, prob_fake = predict_fast(combined_text, vectorizer, lr_model)
+                    model_used = "Logistic Regression (TF-IDF)"
             else:
                 label, prob_fake = predict_fast(combined_text, vectorizer, lr_model)
                 model_used = "Logistic Regression (TF-IDF)"
