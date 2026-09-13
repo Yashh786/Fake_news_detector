@@ -41,7 +41,7 @@ GOOGLE_FONTS = (
 
 @st.dialog("How It Works", width="large")
 def dialog_how_it_works():
-    st.markdown(f"<style>@import url('{GOOGLE_FONTS}');</style>", unsafe_allow_html=True)
+    st.markdown(f"<style>@import url('{GOOGLE_FONTS}'); @media screen and (max-width: 768px) {{ h2 {{ font-size: 26px !important; }} }}</style>", unsafe_allow_html=True)
 
     st.markdown(
         "<p style='font-family:Geist Mono,monospace;font-size:11px;"
@@ -101,7 +101,7 @@ def dialog_how_it_works():
 
 @st.dialog("About Shield", width="large")
 def dialog_about():
-    st.markdown(f"<style>@import url('{GOOGLE_FONTS}');</style>", unsafe_allow_html=True)
+    st.markdown(f"<style>@import url('{GOOGLE_FONTS}'); @media screen and (max-width: 768px) {{ h2 {{ font-size: 26px !important; }} }}</style>", unsafe_allow_html=True)
 
     st.markdown(
         "<p style='font-family:Geist Mono,monospace;font-size:11px;"
@@ -609,6 +609,89 @@ hr {{
     font-family: var(--font-g) !important;
     color: var(--paper) !important;
 }}
+
+/* ── RESPONSIVE CONTAINERS & UTILITIES ───────────────────── */
+.shield-container {{
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 72px 40px 40px;
+}}
+.shield-tabs-container {{
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 56px 40px;
+}}
+.shield-section-title {{
+    font-family: var(--font-d);
+    font-size: 44px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    color: #ffffff;
+    margin-bottom: 32px;
+}}
+.verdict-box {{
+    border-radius: 2px;
+    padding: 36px 44px;
+    margin-bottom: 28px;
+    animation: scaleIn 0.4s ease both;
+}}
+
+/* ── MOBILE BREAKPOINTS (< 768px: iOS & Android) ──────────── */
+@media screen and (max-width: 768px) {{
+    .shield-container {{
+        padding: 36px 16px 20px !important;
+    }}
+    .shield-tabs-container {{
+        padding: 28px 16px 20px !important;
+    }}
+    .shield-section-title {{
+        font-size: 30px !important;
+        letter-spacing: -1.2px !important;
+        margin-bottom: 20px !important;
+    }}
+    .verdict-box {{
+        padding: 20px 18px !important;
+    }}
+    .shield-nav {{
+        padding: 0 14px !important;
+        height: 56px !important;
+    }}
+    .nav-brand {{
+        font-size: 19px !important;
+    }}
+    .nav-btn-filled .stButton > button,
+    .nav-btn-outline .stButton > button {{
+        min-height: 34px !important;
+        height: 34px !important;
+        font-size: 11px !important;
+        padding: 5px 10px !important;
+    }}
+    .stButton > button {{
+        min-height: 48px !important;
+        font-size: 13.5px !important;
+        padding: 12px 18px !important;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        padding: 10px 14px !important;
+        font-size: 10px !important;
+        letter-spacing: 0.5px !important;
+    }}
+    .stTabs [data-baseweb="tab-list"] {{
+        margin-bottom: 20px !important;
+    }}
+    [data-testid="stMetricValue"] {{
+        font-size: 24px !important;
+        letter-spacing: -1px !important;
+    }}
+    [data-testid="stMetricLabel"] {{
+        font-size: 10px !important;
+    }}
+    .stTextArea textarea {{
+        font-size: 15px !important;
+        padding: 12px 14px !important;
+    }}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -937,7 +1020,7 @@ with nav_about_col:
 # ─────────────────────────────────────────────────────────────────────────────
 # DARK HERO — components.html (SVG renders reliably here)
 # ─────────────────────────────────────────────────────────────────────────────
-components.html(f"""<!DOCTYPE html><html><head><meta charset="utf-8">
+components.html(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 {_IFRAME_CSS}
 
@@ -1093,6 +1176,38 @@ section.hero {{
 .s11 {{ animation: drawLine 2.6s ease 1.95s forwards; }}
 .s12 {{ animation: drawLine 2.6s ease 2.10s forwards; }}
 
+@media screen and (max-width: 768px) {{
+    section.hero {{
+        padding: 40px 18px 36px !important;
+        min-height: auto !important;
+    }}
+    .headline {{
+        font-size: clamp(38px, 9vw, 56px) !important;
+        letter-spacing: -1.8px !important;
+        line-height: 1.05 !important;
+        margin: 0 0 16px 0 !important;
+    }}
+    .sub {{
+        font-size: 15px !important;
+        line-height: 1.55 !important;
+        margin-bottom: 22px !important;
+    }}
+    .badge {{
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        padding: 8px 12px !important;
+    }}
+    .badge-sep {{
+        display: none !important;
+    }}
+    .cube-wrap {{
+        opacity: 0.12 !important;
+        right: -80px !important;
+        top: 45% !important;
+        transform: translateY(-50%) scale(0.65) !important;
+    }}
+}}
+
 </style></head><body>
 <section class="hero">
   <div class="scan-line"></div>
@@ -1190,16 +1305,14 @@ with st.sidebar:
 # ─────────────────────────────────────────────────────────────────────────────
 # INPUT SECTION
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown("<div style='max-width:1200px;margin:0 auto;padding:72px 40px 40px;'>", unsafe_allow_html=True)
+st.markdown("<div class='shield-container'>", unsafe_allow_html=True)
 st.markdown(
     "<p style='font-family:Geist Mono,monospace;font-size:11px;letter-spacing:0.72px;"
     "text-transform:uppercase;color:#ffffff;margin-bottom:12px;'>Article Input</p>",
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<div style='font-family:Fraunces,Georgia,serif;font-size:44px;font-weight:400;"
-    "line-height:1.1;letter-spacing:-2px;color:#ffffff;margin-bottom:32px;'>"
-    "Paste your article.</div>",
+    "<div class='shield-section-title'>Paste your article.</div>",
     unsafe_allow_html=True,
 )
 
@@ -1337,7 +1450,7 @@ if analyze_btn:
         # ── NEON MINT BAND (components.html for SVG) ───────────────────────────
         # Per design.md: text on neon mint MUST be Obsidian (#1e211e), never white.
         # Card descriptor text uses Graphite (#4b4d4b).
-        components.html(f"""<!DOCTYPE html><html><head><meta charset="utf-8">
+        components.html(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 {_IFRAME_CSS}
 
@@ -1478,6 +1591,44 @@ body {{ background: #90fc95; margin: 0; }}
     opacity: 0.18;
     pointer-events: none;
 }}
+
+@media screen and (max-width: 768px) {{
+    .band {{
+        padding: 32px 16px 32px !important;
+    }}
+    .headline {{
+        font-size: 32px !important;
+        letter-spacing: -1.2px !important;
+        margin: 0 0 20px 0 !important;
+    }}
+    .cards {{
+        flex-direction: column !important;
+        gap: 12px !important;
+    }}
+    .card {{
+        width: 100% !important;
+        flex: none !important;
+        padding: 18px 18px !important;
+    }}
+    .c-num {{
+        font-size: 40px !important;
+        letter-spacing: -1.8px !important;
+        margin-bottom: 4px !important;
+    }}
+    .c-ey {{
+        margin-bottom: 8px !important;
+    }}
+    .c-desc {{
+        font-size: 13.5px !important;
+        line-height: 1.4 !important;
+    }}
+    .c-bar-t {{
+        margin-top: 12px !important;
+    }}
+    .cube-bleed {{
+        display: none !important;
+    }}
+}}
 </style></head><body>
 <div class="band">
   <div class="cube-bleed">
@@ -1514,10 +1665,10 @@ body {{ background: #90fc95; margin: 0; }}
     </div>
   </div>
 </div>
-</body></html>""", height=520, scrolling=False)
+</body></html>""", height=560, scrolling=False)
 
         # ── TABS ───────────────────────────────────────────────────────────────
-        st.markdown("<div style='max-width:1200px;margin:0 auto;padding:56px 40px;'>", unsafe_allow_html=True)
+        st.markdown("<div class='shield-tabs-container'>", unsafe_allow_html=True)
 
         tab_verdict, tab_words, tab_sentiment, tab_linguistics = st.tabs([
             "Verdict", "Word Analysis", "Sentiment", "Linguistics"
@@ -1551,13 +1702,9 @@ body {{ background: #90fc95; margin: 0; }}
                 desc = "Score is in the ambiguous range (35–65%). May be opinion, satire, or mixed content."
 
             st.markdown(
-                f"<div style='"
+                f"<div class='verdict-box' style='"
                 f"background:#262b26;"
                 f"border-left:4px solid {border_col};"
-                f"border-radius:2px;"
-                f"padding:36px 44px;"
-                f"margin-bottom:28px;"
-                f"animation:scaleIn 0.4s ease both;"
                 f"'>"
                 f"<p style='font-family:Geist Mono,monospace;font-size:11px;letter-spacing:0.72px;"
                 f"text-transform:uppercase;color:#d2d3d2;margin-bottom:8px;'>Model Verdict</p>"
