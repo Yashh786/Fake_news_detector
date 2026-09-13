@@ -9,7 +9,8 @@ joblib
 
 # ─── NLP ─────────────────────────────────────────────────────────────────────
 nltk
-spacy==3.7.5
+# spacy removed — incompatible with Python 3.14 (blis/thinc Cython build failure)
+# preprocessing.py gracefully falls back to NLTK when spacy is unavailable
 vaderSentiment
 scipy
 
