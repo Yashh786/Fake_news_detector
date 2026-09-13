@@ -8,6 +8,8 @@ Run: python -m streamlit run app/app.py
 import os
 import sys
 import pickle
+import math
+import re
 
 import numpy as np
 import streamlit as st
@@ -686,6 +688,60 @@ def bert_api_available() -> bool:
     return bool(_get_hf_token())
 
 
+def calibrate_probability(prob: float, temperature: float = 2.2) -> float:
+    """
+    Calibrate raw softmax probabilities using temperature scaling.
+    Prevents deep transformer models from rounding to a flat 100.0% on every input,
+    giving realistic, nuanced confidence levels (e.g. 96-98% max instead of robotic 100.0%).
+    """
+    eps = 1e-6
+    p = max(eps, min(1.0 - eps, float(prob)))
+    logit = math.log(p / (1.0 - p))
+    scaled_logit = logit / temperature
+    calibrated_p = 1.0 / (1.0 + math.exp(-scaled_logit))
+    # Keep within [0.012, 0.988] so values never display as flat 0.0% or 100.0%
+    return max(0.012, min(0.988, calibrated_p))
+
+
+def analyze_text_quality(text: str) -> dict:
+    """
+    Evaluate input text quality to detect keyboard spam, excessive symbol noise,
+    and out-of-vocabulary gibberish that can distort NLP transformer attention.
+    """
+    if not text or not text.strip():
+        return {"is_noisy": False, "noise_score": 0.0, "reasons": []}
+
+    total_len = len(text)
+    all_symbols = len(re.findall(r"[^a-zA-Z0-9\s]", text))
+    symbol_ratio = all_symbols / max(1, total_len)
+
+    # Check repeated characters (4 or more identical consecutive characters, e.g. bbbbbbbb, ::::::::)
+    repeated_matches = re.findall(r"(.)\1{3,}", text)
+    repeat_char_count = sum(len(m.group(0)) for m in re.finditer(r"(.)\1{2,}", text))
+    repeat_ratio = repeat_char_count / max(1, total_len)
+
+    words = text.split()
+    long_gibberish = [w for w in words if len(w) > 18 and not re.match(r"https?://", w)]
+
+    reasons = []
+    if symbol_ratio > 0.12:
+        reasons.append(f"High symbol noise density ({symbol_ratio*100:.1f}%)")
+    if repeated_matches or repeat_ratio > 0.08:
+        reasons.append(f"Excessive character repetition ({len(repeated_matches)} repeating sequences)")
+    if long_gibberish:
+        reasons.append(f"Gibberish / unsegmented strings ({len(long_gibberish)} words)")
+
+    is_noisy = (symbol_ratio > 0.12) or (repeat_ratio > 0.08) or (len(repeated_matches) >= 2) or bool(long_gibberish)
+    noise_score = min(1.0, (symbol_ratio * 2.5) + (repeat_ratio * 2.0) + (0.15 * len(long_gibberish)))
+
+    return {
+        "is_noisy": is_noisy,
+        "symbol_ratio": symbol_ratio,
+        "noise_score": noise_score,
+        "reasons": reasons,
+    }
+
+
 def _parse_classification_result(result):
     """
     Parse result from HF text_classification.
@@ -694,6 +750,7 @@ def _parse_classification_result(result):
       - FAKE / REAL
       - LABEL_1 (fake) / LABEL_0 (real)
       - 1 (fake) / 0 (real)
+    Applies temperature calibration to prevent overconfidence.
     Returns (label: int, prob_fake: float) where 1=FAKE, 0=REAL.
     """
     scores = {str(item.label).strip().upper(): float(item.score) for item in result}
@@ -721,8 +778,9 @@ def _parse_classification_result(result):
             prob_fake = 1.0 - float(top.score)
 
     prob_fake = max(0.0, min(1.0, float(prob_fake)))
-    label = 1 if prob_fake >= 0.5 else 0
-    return label, prob_fake
+    calibrated_fake = calibrate_probability(prob_fake, temperature=2.2)
+    label = 1 if calibrated_fake >= 0.5 else 0
+    return label, calibrated_fake
 
 
 def predict_bert_api(text: str):
@@ -809,6 +867,9 @@ REAL_EXAMPLE = (
 
 if "article_text" not in st.session_state:
     st.session_state["article_text"] = ""
+
+if "analysis_count" not in st.session_state:
+    st.session_state["analysis_count"] = 0
 
 _PLOT_LAYOUT = dict(
     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
@@ -1153,7 +1214,7 @@ with col_input:
         "Article Content",
         key="article_text",
         height=220,
-        placeholder="Paste the full article text here (minimum 50 characters)…",
+        placeholder="Paste the full article text here (minimum 80 characters / 15 words for reliable analysis)…",
     )
     analyze_btn = st.button("Analyze Article →", type="primary")
 
@@ -1173,6 +1234,14 @@ with col_stats:
                 f"</div>",
                 unsafe_allow_html=True,
             )
+        if cc < 80 or wc < 15:
+            st.markdown(
+                "<div style='font-family:Geist Mono,monospace;font-size:11px;color:#fbbf24;"
+                "letter-spacing:0.4px;padding:10px 14px;background:rgba(251,191,36,0.08);"
+                "border:1px solid rgba(251,191,36,0.25);border-radius:2px;margin-top:6px;line-height:1.4;'>"
+                "⚠️ Text is short — please input more text for reliable analysis (min 15 words / 80 chars)</div>",
+                unsafe_allow_html=True,
+            )
     else:
         st.markdown(
             "<div style='border:1px dashed rgba(255,255,255,0.2);border-radius:2px;padding:24px;"
@@ -1189,10 +1258,21 @@ st.markdown("</div>", unsafe_allow_html=True)
 # ANALYSIS
 # ─────────────────────────────────────────────────────────────────────────────
 if analyze_btn:
-    if not text_input or len(text_input.strip()) < 50:
-        st.error("Please enter at least 50 characters of article text to analyze.")
+    stripped_text = text_input.strip() if text_input else ""
+    words = stripped_text.split()
+    if not stripped_text:
+        st.error("Please enter or paste article content to analyze.")
+    elif len(stripped_text) < 80 or len(words) < 15:
+        st.error(
+            f"⚠️ **Article text is too short ({len(words)} words, {len(stripped_text)} characters).**\n\n"
+            "Please input more text (at least 15 words and 80+ characters). "
+            "Accurate misinformation detection requires sufficient narrative context and sentence structure."
+        )
     else:
+        st.session_state["analysis_count"] = st.session_state.get("analysis_count", 0) + 1
+        run_key = st.session_state["analysis_count"]
         combined_text = combine_title_text(title_input, text_input)
+        quality = analyze_text_quality(combined_text)
 
         with st.spinner("Analyzing…"):
             vectorizer, lr_model = load_fast_model()
@@ -1214,9 +1294,16 @@ if analyze_btn:
                 label, prob_fake = predict_fast(combined_text, vectorizer, lr_model)
                 model_used = "Logistic Regression (TF-IDF)"
 
+            # Moderate confidence if text contains significant noise or keyboard-mashing
+            if quality["is_noisy"]:
+                damping = min(0.75, max(0.35, quality["noise_score"] * 0.70))
+                prob_fake = prob_fake * (1.0 - damping) + 0.50 * damping
+
             prob_real = 1 - prob_fake
 
-        if 0.35 < prob_fake < 0.65:
+        if quality["is_noisy"]:
+            certainty = "uncertain"
+        elif 0.35 < prob_fake < 0.65:
             certainty = "uncertain"
         elif label == 1:
             certainty = "fake"
@@ -1232,11 +1319,20 @@ if analyze_btn:
             vc_label = "Factual probability"; vc_verdict = "Likely Factual"
             bar_color = "#1b5e20";      fill_w = prob_real * 100
         else:
-            vc_class = "uncertain-col"; vc_pct = f"{prob_fake*100:.1f}%"
-            vc_label = "Misinformation score"; vc_verdict = "Uncertain"
-            bar_color = "#4b4d4b";      fill_w = prob_fake * 100
+            vc_class = "uncertain-col"; vc_pct = f"{max(prob_fake, prob_real)*100:.1f}%"
+            vc_label = "Confidence score"; vc_verdict = "Uncertain (Noisy Input)" if quality["is_noisy"] else "Uncertain"
+            bar_color = "#4b4d4b";      fill_w = max(prob_fake, prob_real) * 100
 
         model_short = model_used.split("(")[0].strip()
+        fact_desc = "Consistent with factual reporting" if not quality["is_noisy"] else "Confidence moderated due to text noise"
+
+        if quality["is_noisy"]:
+            reasons_str = " • ".join(quality["reasons"])
+            st.warning(
+                f"⚠️ **Text Quality Notice:** Unusual text noise detected ({reasons_str}). "
+                "Adversarial characters, excessive symbol sequences, or keyboard spam can distort transformer attention. "
+                "Confidence has been moderated toward **Uncertain** to prevent false certainty."
+            )
 
         # ── NEON MINT BAND (components.html for SVG) ───────────────────────────
         # Per design.md: text on neon mint MUST be Obsidian (#1e211e), never white.
@@ -1397,7 +1493,7 @@ body {{ background: #90fc95; margin: 0; }}
   <div class="inner">
     <span class="eyebrow">Analysis Results</span>
     <div class="headline">Your verdict.</div>
-    <div class="cards">
+    <div class="cards" data-run="{run_key}">
       <div class="card">
         <div class="c-ey">{vc_label}</div>
         <div class="c-num {vc_class}">{vc_pct}</div>
@@ -1412,7 +1508,7 @@ body {{ background: #90fc95; margin: 0; }}
       <div class="card">
         <div class="c-ey">Factual Probability</div>
         <div class="c-num real-col">{prob_real*100:.1f}%</div>
-        <div class="c-desc">Consistent with factual reporting</div>
+        <div class="c-desc">{fact_desc}</div>
         <div class="c-bar-t"><div class="c-bar-f" style="width:{prob_real*100:.1f}%;background:#1b5e20;"></div></div>
       </div>
     </div>
@@ -1429,7 +1525,16 @@ body {{ background: #90fc95; margin: 0; }}
 
         with tab_verdict:
             # Verdict banner — dark surface with explicit white/ash text
-            if certainty == "fake":
+            if quality["is_noisy"]:
+                border_col = "#e65100"
+                verdict_num_col = "#ffb74d"
+                htxt = "Uncertain (Noisy Input)"
+                desc = (
+                    f"High text noise detected ({'; '.join(quality['reasons'])}). "
+                    "Unsegmented strings, symbol spam, or keyboard repetition distort transformer attention. "
+                    "Confidence has been moderated to prevent false certainty."
+                )
+            elif certainty == "fake":
                 border_col = "#b71c1c"
                 verdict_num_col = "#ef5350"
                 htxt = "Likely Fake"
@@ -1501,8 +1606,8 @@ body {{ background: #90fc95; margin: 0; }}
                         },
                     },
                 ))
-                fig.update_layout(**_PLOT_LAYOUT)
-                st.plotly_chart(fig, use_container_width=True)
+                fig.update_layout(uirevision=run_key, **_PLOT_LAYOUT)
+                st.plotly_chart(fig, use_container_width=True, key=f"gauge_chart_{run_key}")
             with c2:
                 fig2 = go.Figure(data=[go.Bar(
                     x=["Factual", "Misinformation"],
@@ -1515,6 +1620,7 @@ body {{ background: #90fc95; margin: 0; }}
                     textfont=dict(size=13, color="#ffffff", family="Geist Mono, monospace"),
                 )])
                 fig2.update_layout(
+                    uirevision=run_key,
                     title=dict(
                         text="CLASS PROBABILITIES",
                         font=dict(size=10, family="Geist Mono, monospace", color="#d2d3d2"),
@@ -1529,7 +1635,7 @@ body {{ background: #90fc95; margin: 0; }}
                     xaxis=dict(tickfont=dict(color="#d2d3d2", size=12, family="Geist, Inter, sans-serif")),
                     **_PLOT_LAYOUT,
                 )
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig2, use_container_width=True, key=f"bar_chart_{run_key}")
 
         with tab_words:
             if "DistilBERT" not in mode:
@@ -1600,6 +1706,7 @@ body {{ background: #90fc95; margin: 0; }}
                 textposition="auto", textfont=dict(size=13, color="#ffffff", family="Geist Mono, monospace"),
             )])
             fig_s.update_layout(
+                uirevision=run_key,
                 height=260, showlegend=False, margin=dict(l=10, r=10, t=20, b=10),
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Geist, Inter, sans-serif", color="#d2d3d2"),
@@ -1611,7 +1718,7 @@ body {{ background: #90fc95; margin: 0; }}
                 ),
                 xaxis=dict(tickfont=dict(color="#d2d3d2", size=12, family="Geist, Inter, sans-serif")),
             )
-            st.plotly_chart(fig_s, use_container_width=True)
+            st.plotly_chart(fig_s, use_container_width=True, key=f"sentiment_chart_{run_key}")
             if abs(sent_row["vader_compound"]) > 0.6:
                 st.warning(f"High emotional intensity detected (compound: {sent_row['vader_compound']:.2f}). "
                            "Sensationalist language is a common pattern in misinformation.")
