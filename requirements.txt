@@ -15,6 +15,7 @@ scipy
 
 # ─── BERT via HF Inference API (no local torch — keeps memory < 500 MB) ─────
 requests
+huggingface_hub
 
 # ─── Visualization ────────────────────────────────────────────────────────────
 plotly

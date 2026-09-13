@@ -644,8 +644,6 @@ def load_fast_model():
 # HF INFERENCE API — DistilBERT (no local torch required)
 # Label mapping confirmed from training: LABEL_0 = REAL (0), LABEL_1 = FAKE (1)
 # ─────────────────────────────────────────────────────────────────────────────
-_HF_API_URL = "https://api-inference.huggingface.co/models/{repo_id}"
-
 
 def _get_hf_token() -> str:
     """Read HF token from Streamlit secrets or environment variable."""
@@ -670,37 +668,30 @@ def bert_api_available() -> bool:
 
 def predict_bert_api(text: str):
     """
-    Call HF Inference API for DistilBERT classification.
-    Returns (label: int, prob_fake: float) matching the local predict_bert() contract.
+    Call HF Inference API via official huggingface_hub SDK.
+    Uses the newer provider='hf-inference' routing (router.huggingface.co).
+    Returns (label: int, prob_fake: float) — LABEL_0=REAL, LABEL_1=FAKE.
     Raises RuntimeError on API errors.
     """
-    import requests as _req
-    import time
+    from huggingface_hub import InferenceClient
 
-    cleaned  = clean_text(text)
-    token    = _get_hf_token()
-    repo_id  = _get_hf_repo_id()
-    url      = _HF_API_URL.format(repo_id=repo_id)
-    headers  = {"Authorization": f"Bearer {token}"}
-    payload  = {"inputs": cleaned[:1024]}   # API input limit safety
+    cleaned = clean_text(text)
+    token   = _get_hf_token()
+    repo_id = _get_hf_repo_id()
 
-    resp = _req.post(url, headers=headers, json=payload, timeout=30)
+    client = InferenceClient(
+        provider="hf-inference",
+        api_key=token,
+    )
 
-    # Handle cold-start: model loading (503 with 'loading' in body)
-    if resp.status_code == 503:
-        body = resp.json()
-        estimated = body.get("estimated_time", 20)
-        time.sleep(min(float(estimated), 25))
-        resp = _req.post(url, headers=headers, json=payload, timeout=60)
+    # text_classification handles cold-start and retries internally
+    result = client.text_classification(
+        cleaned[:1024],
+        model=repo_id,
+    )
 
-    if not resp.ok:
-        raise RuntimeError(f"HF API error {resp.status_code}: {resp.text[:200]}")
-
-    result = resp.json()
-    # API returns: [[{"label": "LABEL_0", "score": ...}, {"label": "LABEL_1", "score": ...}]]
-    if isinstance(result, list) and isinstance(result[0], list):
-        result = result[0]
-    scores = {item["label"]: item["score"] for item in result}
+    # result is list of ClassificationOutput(label=..., score=...)
+    scores    = {item.label: item.score for item in result}
     prob_fake = scores.get("LABEL_1", scores.get("1", 0.5))
     label     = 1 if prob_fake >= 0.5 else 0
     return label, float(prob_fake)

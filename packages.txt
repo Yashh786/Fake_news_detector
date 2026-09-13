@@ -1,0 +1,4 @@
+# System packages for Streamlit Cloud
+# Ensures SSL certificates and DNS resolution work correctly
+ca-certificates
+libssl-dev
