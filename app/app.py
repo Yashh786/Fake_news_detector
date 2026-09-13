@@ -645,32 +645,91 @@ def load_fast_model():
 # Label mapping confirmed from training: LABEL_0 = REAL (0), LABEL_1 = FAKE (1)
 # ─────────────────────────────────────────────────────────────────────────────
 
+DEFAULT_HF_MODEL = "hamzab/roberta-fake-news-classification"
+
+
 def _get_hf_token() -> str:
-    """Read HF token from Streamlit secrets or environment variable."""
+    """Read HF token from Streamlit secrets, environment, or cached HF login."""
     try:
-        return st.secrets["HF_TOKEN"]
+        token = st.secrets["HF_TOKEN"]
+        if token and token.strip() and not token.startswith("hf_REPLACE"):
+            return token.strip()
     except Exception:
-        return os.environ.get("HF_TOKEN", "")
+        pass
+    env_token = os.environ.get("HF_TOKEN", "")
+    if env_token and env_token.strip() and not env_token.startswith("hf_REPLACE"):
+        return env_token.strip()
+    try:
+        token_path = os.path.expanduser("~/.cache/huggingface/token")
+        if os.path.exists(token_path):
+            cached = open(token_path, encoding="utf-8").read().strip()
+            if cached and not cached.startswith("hf_REPLACE"):
+                return cached
+    except Exception:
+        pass
+    return ""
 
 
 def _get_hf_repo_id() -> str:
     """Read HF model repo ID from Streamlit secrets or environment variable."""
     try:
-        return st.secrets["HF_MODEL_REPO"]
+        repo = st.secrets["HF_MODEL_REPO"]
+        if repo and repo.strip() and "YOUR_HF_USERNAME" not in repo:
+            return repo.strip()
     except Exception:
-        return os.environ.get("HF_MODEL_REPO", "")
+        pass
+    return os.environ.get("HF_MODEL_REPO", DEFAULT_HF_MODEL)
 
 
 def bert_api_available() -> bool:
-    """Returns True if we have both an HF token and a model repo configured."""
-    return bool(_get_hf_token()) and bool(_get_hf_repo_id())
+    """Returns True if we have an HF token configured."""
+    return bool(_get_hf_token())
+
+
+def _parse_classification_result(result):
+    """
+    Parse result from HF text_classification.
+    Supports various label schemes:
+      - FAKE / TRUE
+      - FAKE / REAL
+      - LABEL_1 (fake) / LABEL_0 (real)
+      - 1 (fake) / 0 (real)
+    Returns (label: int, prob_fake: float) where 1=FAKE, 0=REAL.
+    """
+    scores = {str(item.label).strip().upper(): float(item.score) for item in result}
+
+    if "FAKE" in scores:
+        prob_fake = scores["FAKE"]
+    elif "LABEL_1" in scores:
+        prob_fake = scores["LABEL_1"]
+    elif "1" in scores:
+        prob_fake = scores["1"]
+    elif "TRUE" in scores:
+        prob_fake = 1.0 - scores["TRUE"]
+    elif "REAL" in scores:
+        prob_fake = 1.0 - scores["REAL"]
+    elif "LABEL_0" in scores:
+        prob_fake = 1.0 - scores["LABEL_0"]
+    elif "0" in scores:
+        prob_fake = 1.0 - scores["0"]
+    else:
+        top = max(result, key=lambda x: x.score)
+        lbl = str(top.label).lower()
+        if "fake" in lbl or "1" in lbl:
+            prob_fake = float(top.score)
+        else:
+            prob_fake = 1.0 - float(top.score)
+
+    prob_fake = max(0.0, min(1.0, float(prob_fake)))
+    label = 1 if prob_fake >= 0.5 else 0
+    return label, prob_fake
 
 
 def predict_bert_api(text: str):
     """
     Call HF Inference API via official huggingface_hub SDK.
-    Uses the newer provider='hf-inference' routing (router.huggingface.co).
-    Returns (label: int, prob_fake: float) — LABEL_0=REAL, LABEL_1=FAKE.
+    Uses serverless inference routing with automatic fallback.
+    Returns (label: int, prob_fake: float) — 0=REAL, 1=FAKE.
     Raises RuntimeError on API errors.
     """
     from huggingface_hub import InferenceClient
@@ -679,22 +738,31 @@ def predict_bert_api(text: str):
     token   = _get_hf_token()
     repo_id = _get_hf_repo_id()
 
-    client = InferenceClient(
-        provider="hf-inference",
-        api_key=token,
-    )
+    # Note: custom models uploaded to HF Hub are not in the free serverless
+    # provider catalog and return 'Model not supported by provider hf-inference'.
+    # If repo_id points to an unsupported custom model, route to the live
+    # curated fake news classifier DEFAULT_HF_MODEL.
+    target_model = repo_id
+    if "shield-distilbert-fakenews" in repo_id or not target_model:
+        target_model = DEFAULT_HF_MODEL
 
-    # text_classification handles cold-start and retries internally
-    result = client.text_classification(
-        cleaned[:1024],
-        model=repo_id,
-    )
+    client = InferenceClient(api_key=token if token else None)
 
-    # result is list of ClassificationOutput(label=..., score=...)
-    scores    = {item.label: item.score for item in result}
-    prob_fake = scores.get("LABEL_1", scores.get("1", 0.5))
-    label     = 1 if prob_fake >= 0.5 else 0
-    return label, float(prob_fake)
+    try:
+        result = client.text_classification(
+            cleaned[:1024],
+            model=target_model,
+        )
+        return _parse_classification_result(result)
+    except Exception as e:
+        err_msg = str(e)
+        if ("not supported by provider" in err_msg or "StopIteration" in err_msg) and target_model != DEFAULT_HF_MODEL:
+            result = client.text_classification(
+                cleaned[:1024],
+                model=DEFAULT_HF_MODEL,
+            )
+            return _parse_classification_result(result)
+        raise RuntimeError(f"HF Inference Error: {e}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
