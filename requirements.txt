@@ -4,22 +4,20 @@ numpy
 
 # ─── ML ──────────────────────────────────────────────────────────────────────
 scikit-learn
-xgboost
+xgboost==2.1.4
 joblib
 
 # ─── NLP ─────────────────────────────────────────────────────────────────────
 nltk
-spacy
+spacy==3.7.5
 vaderSentiment
 scipy
 
-# ─── BERT via HF Inference API (no local torch — keeps memory < 500 MB) ─────
-requests
-huggingface_hub
+# ─── BERT via HF Inference API (no local torch) ──────────────────────────────
+huggingface_hub>=0.25.0
 
 # ─── Visualization ────────────────────────────────────────────────────────────
 plotly
 
 # ─── Web App ─────────────────────────────────────────────────────────────────
-streamlit
-streamlit-extras
+streamlit>=1.35.0

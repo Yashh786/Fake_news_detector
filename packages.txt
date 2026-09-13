@@ -1,4 +1,3 @@
-# System packages for Streamlit Cloud
-# Ensures SSL certificates and DNS resolution work correctly
+# System packages for Streamlit Cloud (Ubuntu 22.04)
+# Ensures SSL certificates work for external API calls
 ca-certificates
-libssl-dev
