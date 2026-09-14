@@ -1098,15 +1098,16 @@ with nav_brand_col:
             align-items: center;
             gap: 10px;
             font-family: Fraunces, Georgia, serif;
-            font-size: 22px;
+            font-size: 30px;
             font-weight: 300;
-            letter-spacing: -1.12px;
+            letter-spacing: -1.5px;
             color: #ffffff;
             animation: slideInLeft 0.5s ease 0.1s both;
+            line-height: 1;
           '>
             <span style='
-              width: 8px; height: 8px; border-radius: 50%;
-              background: #90fc95; display: inline-block;
+              width: 12px; height: 12px; border-radius: 50%;
+              background: #90fc95; display: inline-block; flex-shrink: 0;
               animation: mintPulse 2.5s ease-in-out infinite;
             '></span>
             Shield
