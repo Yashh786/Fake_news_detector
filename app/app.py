@@ -310,17 +310,17 @@ iframe {{ display: block; border: none !important; }}
     align-items: center;
     gap: 10px;
     font-family: var(--font-d);
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 300;
-    letter-spacing: -1.12px;
+    letter-spacing: -1.3px;
     color: var(--obsidian);
     text-decoration: none;
     flex-shrink: 0;
     animation: slideInLeft 0.5s ease 0.1s both;
 }}
 .nav-brand-dot {{
-    width: 8px;
-    height: 8px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
     background: var(--mint);
     flex-shrink: 0;
@@ -673,12 +673,12 @@ hr {{
         height: 52px !important;
     }}
     .nav-brand {{
-        font-size: 17px !important;
-        gap: 7px !important;
+        font-size: 21px !important;
+        gap: 8px !important;
     }}
     .nav-brand-dot {{
-        width: 7px !important;
-        height: 7px !important;
+        width: 9px !important;
+        height: 9px !important;
     }}
     .nav-btn-filled .stButton > button,
     .nav-btn-filled .stButton > button p,
@@ -790,7 +790,7 @@ hr {{
         margin-bottom: 14px !important;
     }}
     .nav-brand {{
-        font-size: 15px !important;
+        font-size: 19px !important;
     }}
     .nav-btn-filled .stButton > button,
     .nav-btn-outline .stButton > button {{
