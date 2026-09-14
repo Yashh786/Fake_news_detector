@@ -184,10 +184,21 @@ def dialog_about():
             )
 
 
+# ── Viewport meta (critical for mobile — prevents desktop-width rendering) ─────
+st.markdown(
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">',
+    unsafe_allow_html=True,
+)
+
 # ── Global CSS ─────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
 @import url('{GOOGLE_FONTS}');
+
+/* Mobile-safe base reset */
+*, *::before, *::after {{ box-sizing: border-box; }}
+html {{ scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }}
+
 
 :root {{
     --obsidian: #1e211e;
@@ -639,57 +650,162 @@ hr {{
 
 /* ── MOBILE BREAKPOINTS (< 768px: iOS & Android) ──────────── */
 @media screen and (max-width: 768px) {{
+    /* Layout containers */
     .shield-container {{
-        padding: 36px 16px 20px !important;
+        padding: 28px 14px 16px !important;
     }}
     .shield-tabs-container {{
-        padding: 28px 16px 20px !important;
+        padding: 22px 14px 16px !important;
     }}
     .shield-section-title {{
-        font-size: 30px !important;
-        letter-spacing: -1.2px !important;
-        margin-bottom: 20px !important;
+        font-size: 28px !important;
+        letter-spacing: -1px !important;
+        margin-bottom: 18px !important;
+        line-height: 1.2 !important;
     }}
     .verdict-box {{
-        padding: 20px 18px !important;
+        padding: 16px 14px !important;
     }}
+
+    /* Nav bar */
     .shield-nav {{
-        padding: 0 14px !important;
-        height: 56px !important;
+        padding: 0 10px !important;
+        height: 52px !important;
     }}
     .nav-brand {{
-        font-size: 19px !important;
+        font-size: 17px !important;
+        gap: 7px !important;
+    }}
+    .nav-brand-dot {{
+        width: 7px !important;
+        height: 7px !important;
+    }}
+    .nav-btn-filled .stButton > button,
+    .nav-btn-filled .stButton > button p,
+    .nav-btn-filled .stButton > button span {{
+        min-height: 34px !important;
+        height: 34px !important;
+        font-size: 10px !important;
+        padding: 4px 8px !important;
+        letter-spacing: 0 !important;
+    }}
+    .nav-btn-outline .stButton > button,
+    .nav-btn-outline .stButton > button p,
+    .nav-btn-outline .stButton > button span {{
+        min-height: 34px !important;
+        height: 34px !important;
+        font-size: 10px !important;
+        padding: 4px 8px !important;
+        letter-spacing: 0 !important;
+    }}
+
+    /* Primary action buttons — WCAG 2.5.5 min 48x48 tap target */
+    .stButton > button {{
+        min-height: 52px !important;
+        font-size: 13.5px !important;
+        padding: 14px 18px !important;
+    }}
+
+    /* Tab bar — horizontal scroll instead of clipping */
+    .stTabs [data-baseweb="tab-list"] {{
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        flex-wrap: nowrap !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+        margin-bottom: 18px !important;
+        padding-bottom: 2px !important;
+    }}
+    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {{
+        display: none !important;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        padding: 10px 11px !important;
+        font-size: 9.5px !important;
+        letter-spacing: 0.4px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }}
+
+    /* Metrics — shrink for mobile */
+    [data-testid="stMetricValue"] {{
+        font-size: 22px !important;
+        letter-spacing: -0.8px !important;
+    }}
+    [data-testid="stMetricLabel"] {{
+        font-size: 9.5px !important;
+        letter-spacing: 0.5px !important;
+    }}
+
+    /* Text inputs — 16px prevents iOS auto-zoom */
+    .stTextArea textarea {{
+        font-size: 16px !important;
+        padding: 12px 12px !important;
+        line-height: 1.5 !important;
+    }}
+    .stTextInput input {{
+        font-size: 16px !important;
+        padding: 10px 12px !important;
+    }}
+
+    /* Column padding tighter on mobile */
+    [data-testid="column"] {{
+        padding: 0 4px !important;
+    }}
+
+    /* Word analysis rows */
+    [data-testid="stHorizontalBlock"] {{
+        flex-wrap: wrap !important;
+        gap: 8px 0 !important;
+    }}
+
+    /* HR spacing */
+    hr {{
+        margin: 24px 0 !important;
+    }}
+
+    /* Alerts slightly more compact */
+    .stAlert {{
+        font-size: 13px !important;
+    }}
+
+    /* Stat count cards in input section */
+    .shield-stat-num {{
+        font-size: 28px !important;
+        letter-spacing: -1.5px !important;
+    }}
+}}
+
+/* ── EXTRA SMALL (< 480px: compact Android / iPhone SE) ─────── */
+@media screen and (max-width: 480px) {{
+    .shield-container {{
+        padding: 20px 10px 12px !important;
+    }}
+    .shield-tabs-container {{
+        padding: 16px 10px 12px !important;
+    }}
+    .shield-section-title {{
+        font-size: 22px !important;
+        letter-spacing: -0.7px !important;
+        margin-bottom: 14px !important;
+    }}
+    .nav-brand {{
+        font-size: 15px !important;
     }}
     .nav-btn-filled .stButton > button,
     .nav-btn-outline .stButton > button {{
-        min-height: 34px !important;
-        height: 34px !important;
-        font-size: 11px !important;
-        padding: 5px 10px !important;
-    }}
-    .stButton > button {{
-        min-height: 48px !important;
-        font-size: 13.5px !important;
-        padding: 12px 18px !important;
+        font-size: 9px !important;
+        padding: 4px 6px !important;
     }}
     .stTabs [data-baseweb="tab"] {{
-        padding: 10px 14px !important;
-        font-size: 10px !important;
-        letter-spacing: 0.5px !important;
-    }}
-    .stTabs [data-baseweb="tab-list"] {{
-        margin-bottom: 20px !important;
+        padding: 8px 9px !important;
+        font-size: 8.5px !important;
     }}
     [data-testid="stMetricValue"] {{
-        font-size: 24px !important;
-        letter-spacing: -1px !important;
+        font-size: 20px !important;
     }}
-    [data-testid="stMetricLabel"] {{
-        font-size: 10px !important;
-    }}
-    .stTextArea textarea {{
-        font-size: 15px !important;
-        padding: 12px 14px !important;
+    .verdict-box {{
+        padding: 14px 12px !important;
     }}
 }}
 </style>
@@ -965,7 +1081,7 @@ _PLOT_LAYOUT = dict(
 # Logo left · text-links center · action buttons right
 # ─────────────────────────────────────────────────────────────────────────────
 nav_brand_col, nav_spacer_col, nav_hiw_col, nav_about_col = st.columns(
-    [2.5, 5.5, 1.0, 1.0]
+    [2.5, 5.2, 1.15, 1.15]
 )
 
 with nav_brand_col:
@@ -1245,7 +1361,7 @@ section.hero {{
     </svg>
   </div>
 </section>
-</body></html>""", height=640, scrolling=False)
+</body></html>""", height=540, scrolling=False)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SIDEBAR — model selection + sample loaders
@@ -1594,41 +1710,69 @@ body {{ background: #90fc95; margin: 0; }}
 
 @media screen and (max-width: 768px) {{
     .band {{
-        padding: 32px 16px 32px !important;
+        padding: 28px 14px 28px !important;
     }}
     .headline {{
-        font-size: 32px !important;
-        letter-spacing: -1.2px !important;
-        margin: 0 0 20px 0 !important;
+        font-size: 28px !important;
+        letter-spacing: -1px !important;
+        margin: 0 0 16px 0 !important;
+    }}
+    .eyebrow {{
+        font-size: 10px !important;
+        margin-bottom: 10px !important;
     }}
     .cards {{
         flex-direction: column !important;
-        gap: 12px !important;
+        gap: 10px !important;
     }}
     .card {{
         width: 100% !important;
         flex: none !important;
-        padding: 18px 18px !important;
+        min-width: 0 !important;
+        padding: 16px 16px !important;
     }}
     .c-num {{
-        font-size: 40px !important;
-        letter-spacing: -1.8px !important;
+        font-size: 36px !important;
+        letter-spacing: -1.6px !important;
         margin-bottom: 4px !important;
     }}
+    .c-num.eng {{
+        font-size: 16px !important;
+    }}
     .c-ey {{
-        margin-bottom: 8px !important;
+        font-size: 10px !important;
+        margin-bottom: 6px !important;
     }}
     .c-desc {{
-        font-size: 13.5px !important;
+        font-size: 13px !important;
         line-height: 1.4 !important;
     }}
     .c-bar-t {{
-        margin-top: 12px !important;
+        margin-top: 10px !important;
     }}
     .cube-bleed {{
         display: none !important;
     }}
 }}
+@media screen and (max-width: 480px) {{
+    .band {{
+        padding: 20px 10px 20px !important;
+    }}
+    .headline {{
+        font-size: 22px !important;
+        margin: 0 0 12px 0 !important;
+    }}
+    .card {{
+        padding: 13px 12px !important;
+    }}
+    .c-num {{
+        font-size: 28px !important;
+    }}
+    .c-desc {{
+        font-size: 12px !important;
+    }}
+}}
+
 </style></head><body>
 <div class="band">
   <div class="cube-bleed">
@@ -1665,7 +1809,7 @@ body {{ background: #90fc95; margin: 0; }}
     </div>
   </div>
 </div>
-</body></html>""", height=560, scrolling=False)
+</body></html>""", height=720, scrolling=False)
 
         # ── TABS ───────────────────────────────────────────────────────────────
         st.markdown("<div class='shield-tabs-container'>", unsafe_allow_html=True)
@@ -1837,7 +1981,7 @@ body {{ background: #90fc95; margin: 0; }}
             )
             sent_df  = extract_sentiment_features(pd.Series([text_input]))
             sent_row = sent_df.iloc[0]
-            cs1, cs2, cs3, cs4 = st.columns(4)
+            cs1, cs2, cs3, cs4 = st.columns(4, gap="small")
             cs1.metric("Negative", f"{sent_row['vader_neg']:.2f}")
             cs2.metric("Neutral",  f"{sent_row['vader_neu']:.2f}")
             cs3.metric("Positive", f"{sent_row['vader_pos']:.2f}")
