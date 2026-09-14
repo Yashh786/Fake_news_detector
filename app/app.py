@@ -1091,22 +1091,22 @@ with nav_brand_col:
             height: 64px;
             display: flex;
             align-items: flex-end;
-            padding: 0 8px 10px;
+            padding: 0 8px 4px;
         '>
           <span style='
             display: flex;
             align-items: center;
             gap: 10px;
             font-family: Fraunces, Georgia, serif;
-            font-size: 34px;
+            font-size: 40px;
             font-weight: 300;
-            letter-spacing: -1.6px;
+            letter-spacing: -1.8px;
             color: #ffffff;
             animation: slideInLeft 0.5s ease 0.1s both;
             line-height: 1;
           '>
             <span style='
-              width: 13px; height: 13px; border-radius: 50%;
+              width: 15px; height: 15px; border-radius: 50%;
               background: #90fc95; display: inline-block; flex-shrink: 0;
               animation: mintPulse 2.5s ease-in-out infinite;
             '></span>
